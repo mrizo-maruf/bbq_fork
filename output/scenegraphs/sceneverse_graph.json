@@ -1,0 +1,894 @@
+{
+    "nodes": [
+        {
+            "id": 0,
+            "bbox_extent": [
+                0.7,
+                0.4,
+                0.4
+            ],
+            "bbox_center": [
+                3.2,
+                -1.7,
+                0.7
+            ],
+            "description": "Tire on a cart."
+        },
+        {
+            "id": 1,
+            "bbox_extent": [
+                0.5,
+                0.4,
+                0.5
+            ],
+            "bbox_center": [
+                4.4,
+                -0.9,
+                0.7
+            ],
+            "description": "Tire on car."
+        },
+        {
+            "id": 2,
+            "bbox_extent": [
+                1.1,
+                1.0,
+                0.5
+            ],
+            "bbox_center": [
+                4.3,
+                -1.3,
+                1.0
+            ],
+            "description": "Yellow toy car with black tires."
+        },
+        {
+            "id": 3,
+            "bbox_extent": [
+                0.8,
+                1.0,
+                0.3
+            ],
+            "bbox_center": [
+                4.8,
+                -1.2,
+                1.0
+            ],
+            "description": "Yellow cart with black tires."
+        },
+        {
+            "id": 4,
+            "bbox_extent": [
+                6.1,
+                8.5,
+                1.0
+            ],
+            "bbox_center": [
+                2.9,
+                -2.8,
+                0.4
+            ],
+            "description": "Yellow forklift with black tires."
+        },
+        {
+            "id": 5,
+            "bbox_extent": [
+                0.6,
+                0.8,
+                1.1
+            ],
+            "bbox_center": [
+                -8.8,
+                5.6,
+                1.1
+            ],
+            "description": "A gray wall."
+        },
+        {
+            "id": 6,
+            "bbox_extent": [
+                0.5,
+                0.6,
+                0.5
+            ],
+            "bbox_center": [
+                -8.9,
+                4.8,
+                1.4
+            ],
+            "description": "Blue plastic container with lid."
+        },
+        {
+            "id": 7,
+            "bbox_extent": [
+                0.7,
+                0.7,
+                0.2
+            ],
+            "bbox_center": [
+                -9.2,
+                10.3,
+                1.1
+            ],
+            "description": "Cardboard box with flaps."
+        },
+        {
+            "id": 8,
+            "bbox_extent": [
+                3.5,
+                11.6,
+                1.1
+            ],
+            "bbox_center": [
+                -7.7,
+                9.0,
+                0.4
+            ],
+            "description": "A blue plastic container."
+        },
+        {
+            "id": 9,
+            "bbox_extent": [
+                0.5,
+                0.5,
+                0.4
+            ],
+            "bbox_center": [
+                -9.0,
+                6.4,
+                1.2
+            ],
+            "description": "Cardboard box on counter."
+        },
+        {
+            "id": 10,
+            "bbox_extent": [
+                6.2,
+                9.1,
+                1.1
+            ],
+            "bbox_center": [
+                -3.1,
+                12.0,
+                0.4
+            ],
+            "description": "A cart with a purple box on it."
+        },
+        {
+            "id": 11,
+            "bbox_extent": [
+                14.4,
+                2.3,
+                0.6
+            ],
+            "bbox_center": [
+                -3.2,
+                16.3,
+                1.0
+            ],
+            "description": "A wall on the side of a building."
+        }
+    ],
+    "edges": [
+        {
+            "source": 0,
+            "target": -2,
+            "relation": "hung on"
+        },
+        {
+            "source": 1,
+            "target": -2,
+            "relation": "hung on"
+        },
+        {
+            "source": 2,
+            "target": -2,
+            "relation": "hanging on"
+        },
+        {
+            "source": 3,
+            "target": -2,
+            "relation": "hanging on"
+        },
+        {
+            "source": 4,
+            "target": -2,
+            "relation": "hanging on"
+        },
+        {
+            "source": 5,
+            "target": -2,
+            "relation": "hung on"
+        },
+        {
+            "source": 6,
+            "target": -2,
+            "relation": "hanging on"
+        },
+        {
+            "source": 7,
+            "target": -2,
+            "relation": "hanging on"
+        },
+        {
+            "source": 8,
+            "target": -2,
+            "relation": "hung on"
+        },
+        {
+            "source": 9,
+            "target": -2,
+            "relation": "hanging on"
+        },
+        {
+            "source": 10,
+            "target": -2,
+            "relation": "hanging on"
+        },
+        {
+            "source": 11,
+            "target": -2,
+            "relation": "hung on"
+        },
+        {
+            "source": 1,
+            "target": 0,
+            "relation": "8 oclock direction far from"
+        },
+        {
+            "source": 0,
+            "target": 1,
+            "relation": "to the right of"
+        },
+        {
+            "source": 2,
+            "target": 0,
+            "relation": "8 oclock direction near"
+        },
+        {
+            "source": 0,
+            "target": 2,
+            "relation": "to the right of"
+        },
+        {
+            "source": 3,
+            "target": 0,
+            "relation": "8 oclock direction far from"
+        },
+        {
+            "source": 0,
+            "target": 3,
+            "relation": "to the right of"
+        },
+        {
+            "source": 4,
+            "target": 0,
+            "relation": "1 oclock direction near"
+        },
+        {
+            "source": 0,
+            "target": 4,
+            "relation": "behind"
+        },
+        {
+            "source": 5,
+            "target": 0,
+            "relation": "4 oclock direction far from"
+        },
+        {
+            "source": 0,
+            "target": 5,
+            "relation": "to the left of"
+        },
+        {
+            "source": 6,
+            "target": 0,
+            "relation": "4 oclock direction far from"
+        },
+        {
+            "source": 0,
+            "target": 6,
+            "relation": "to the left of"
+        },
+        {
+            "source": 7,
+            "target": 0,
+            "relation": "4 oclock direction far from"
+        },
+        {
+            "source": 0,
+            "target": 7,
+            "relation": "to the left of"
+        },
+        {
+            "source": 8,
+            "target": 0,
+            "relation": "4 oclock direction far from"
+        },
+        {
+            "source": 0,
+            "target": 8,
+            "relation": "to the left of"
+        },
+        {
+            "source": 9,
+            "target": 0,
+            "relation": "4 oclock direction far from"
+        },
+        {
+            "source": 0,
+            "target": 9,
+            "relation": "to the left of"
+        },
+        {
+            "source": 10,
+            "target": 0,
+            "relation": "5 oclock direction far from"
+        },
+        {
+            "source": 0,
+            "target": 10,
+            "relation": "in front of"
+        },
+        {
+            "source": 11,
+            "target": 0,
+            "relation": "5 oclock direction far from"
+        },
+        {
+            "source": 0,
+            "target": 11,
+            "relation": "in front of"
+        },
+        {
+            "source": 2,
+            "target": 1,
+            "relation": "12 oclock direction near"
+        },
+        {
+            "source": 1,
+            "target": 2,
+            "relation": "behind"
+        },
+        {
+            "source": 3,
+            "target": 1,
+            "relation": "10 oclock direction near"
+        },
+        {
+            "source": 1,
+            "target": 3,
+            "relation": "to the right of"
+        },
+        {
+            "source": 4,
+            "target": 1,
+            "relation": "1 oclock direction near"
+        },
+        {
+            "source": 1,
+            "target": 4,
+            "relation": "behind"
+        },
+        {
+            "source": 5,
+            "target": 1,
+            "relation": "4 oclock direction far from"
+        },
+        {
+            "source": 1,
+            "target": 5,
+            "relation": "to the left of"
+        },
+        {
+            "source": 6,
+            "target": 1,
+            "relation": "4 oclock direction far from"
+        },
+        {
+            "source": 1,
+            "target": 6,
+            "relation": "to the left of"
+        },
+        {
+            "source": 7,
+            "target": 1,
+            "relation": "4 oclock direction far from"
+        },
+        {
+            "source": 1,
+            "target": 7,
+            "relation": "to the left of"
+        },
+        {
+            "source": 8,
+            "target": 1,
+            "relation": "4 oclock direction far from"
+        },
+        {
+            "source": 1,
+            "target": 8,
+            "relation": "to the left of"
+        },
+        {
+            "source": 9,
+            "target": 1,
+            "relation": "4 oclock direction far from"
+        },
+        {
+            "source": 1,
+            "target": 9,
+            "relation": "to the left of"
+        },
+        {
+            "source": 10,
+            "target": 1,
+            "relation": "5 oclock direction far from"
+        },
+        {
+            "source": 1,
+            "target": 10,
+            "relation": "in front of"
+        },
+        {
+            "source": 11,
+            "target": 1,
+            "relation": "5 oclock direction far from"
+        },
+        {
+            "source": 1,
+            "target": 11,
+            "relation": "in front of"
+        },
+        {
+            "source": 2,
+            "target": 3,
+            "relation": "close to"
+        },
+        {
+            "source": 3,
+            "target": 2,
+            "relation": "next to"
+        },
+        {
+            "source": 4,
+            "target": 2,
+            "relation": "1 oclock direction near"
+        },
+        {
+            "source": 2,
+            "target": 4,
+            "relation": "behind"
+        },
+        {
+            "source": 5,
+            "target": 2,
+            "relation": "4 oclock direction far from"
+        },
+        {
+            "source": 2,
+            "target": 5,
+            "relation": "to the left of"
+        },
+        {
+            "source": 6,
+            "target": 2,
+            "relation": "4 oclock direction far from"
+        },
+        {
+            "source": 2,
+            "target": 6,
+            "relation": "to the left of"
+        },
+        {
+            "source": 7,
+            "target": 2,
+            "relation": "4 oclock direction far from"
+        },
+        {
+            "source": 2,
+            "target": 7,
+            "relation": "to the left of"
+        },
+        {
+            "source": 8,
+            "target": 2,
+            "relation": "4 oclock direction far from"
+        },
+        {
+            "source": 2,
+            "target": 8,
+            "relation": "to the left of"
+        },
+        {
+            "source": 9,
+            "target": 2,
+            "relation": "4 oclock direction far from"
+        },
+        {
+            "source": 2,
+            "target": 9,
+            "relation": "to the left of"
+        },
+        {
+            "source": 10,
+            "target": 2,
+            "relation": "5 oclock direction far from"
+        },
+        {
+            "source": 2,
+            "target": 10,
+            "relation": "in front of"
+        },
+        {
+            "source": 11,
+            "target": 2,
+            "relation": "5 oclock direction far from"
+        },
+        {
+            "source": 2,
+            "target": 11,
+            "relation": "in front of"
+        },
+        {
+            "source": 4,
+            "target": 3,
+            "relation": "2 oclock direction near"
+        },
+        {
+            "source": 3,
+            "target": 4,
+            "relation": "to the left of"
+        },
+        {
+            "source": 5,
+            "target": 3,
+            "relation": "4 oclock direction far from"
+        },
+        {
+            "source": 3,
+            "target": 5,
+            "relation": "to the left of"
+        },
+        {
+            "source": 6,
+            "target": 3,
+            "relation": "4 oclock direction far from"
+        },
+        {
+            "source": 3,
+            "target": 6,
+            "relation": "to the left of"
+        },
+        {
+            "source": 7,
+            "target": 3,
+            "relation": "4 oclock direction far from"
+        },
+        {
+            "source": 3,
+            "target": 7,
+            "relation": "to the left of"
+        },
+        {
+            "source": 8,
+            "target": 3,
+            "relation": "4 oclock direction far from"
+        },
+        {
+            "source": 3,
+            "target": 8,
+            "relation": "to the left of"
+        },
+        {
+            "source": 9,
+            "target": 3,
+            "relation": "4 oclock direction far from"
+        },
+        {
+            "source": 3,
+            "target": 9,
+            "relation": "to the left of"
+        },
+        {
+            "source": 10,
+            "target": 3,
+            "relation": "5 oclock direction far from"
+        },
+        {
+            "source": 3,
+            "target": 10,
+            "relation": "in front of"
+        },
+        {
+            "source": 11,
+            "target": 3,
+            "relation": "5 oclock direction far from"
+        },
+        {
+            "source": 3,
+            "target": 11,
+            "relation": "in front of"
+        },
+        {
+            "source": 5,
+            "target": 4,
+            "relation": "4 oclock direction far from"
+        },
+        {
+            "source": 4,
+            "target": 5,
+            "relation": "to the left of"
+        },
+        {
+            "source": 6,
+            "target": 4,
+            "relation": "4 oclock direction far from"
+        },
+        {
+            "source": 4,
+            "target": 6,
+            "relation": "to the left of"
+        },
+        {
+            "source": 7,
+            "target": 4,
+            "relation": "5 oclock direction far from"
+        },
+        {
+            "source": 4,
+            "target": 7,
+            "relation": "in front of"
+        },
+        {
+            "source": 8,
+            "target": 4,
+            "relation": "5 oclock direction near"
+        },
+        {
+            "source": 4,
+            "target": 8,
+            "relation": "in front of"
+        },
+        {
+            "source": 9,
+            "target": 4,
+            "relation": "4 oclock direction far from"
+        },
+        {
+            "source": 4,
+            "target": 9,
+            "relation": "to the left of"
+        },
+        {
+            "source": 10,
+            "target": 4,
+            "relation": "5 oclock direction near"
+        },
+        {
+            "source": 4,
+            "target": 10,
+            "relation": "in front of"
+        },
+        {
+            "source": 11,
+            "target": 4,
+            "relation": "5 oclock direction far from"
+        },
+        {
+            "source": 4,
+            "target": 11,
+            "relation": "in front of"
+        },
+        {
+            "source": 6,
+            "target": 5,
+            "relation": "12 oclock direction near"
+        },
+        {
+            "source": 5,
+            "target": 6,
+            "relation": "behind"
+        },
+        {
+            "source": 7,
+            "target": 5,
+            "relation": "6 oclock direction far from"
+        },
+        {
+            "source": 5,
+            "target": 7,
+            "relation": "in front of"
+        },
+        {
+            "source": 8,
+            "target": 5,
+            "relation": "7 oclock direction near"
+        },
+        {
+            "source": 5,
+            "target": 8,
+            "relation": "in front of"
+        },
+        {
+            "source": 9,
+            "target": 5,
+            "relation": "6 oclock direction near"
+        },
+        {
+            "source": 5,
+            "target": 9,
+            "relation": "in front of"
+        },
+        {
+            "source": 10,
+            "target": 5,
+            "relation": "7 oclock direction near"
+        },
+        {
+            "source": 5,
+            "target": 10,
+            "relation": "in front of"
+        },
+        {
+            "source": 11,
+            "target": 5,
+            "relation": "7 oclock direction far from"
+        },
+        {
+            "source": 5,
+            "target": 11,
+            "relation": "in front of"
+        },
+        {
+            "source": 7,
+            "target": 6,
+            "relation": "6 oclock direction far from"
+        },
+        {
+            "source": 6,
+            "target": 7,
+            "relation": "in front of"
+        },
+        {
+            "source": 8,
+            "target": 6,
+            "relation": "7 oclock direction near"
+        },
+        {
+            "source": 6,
+            "target": 8,
+            "relation": "in front of"
+        },
+        {
+            "source": 9,
+            "target": 6,
+            "relation": "6 oclock direction far from"
+        },
+        {
+            "source": 6,
+            "target": 9,
+            "relation": "in front of"
+        },
+        {
+            "source": 10,
+            "target": 6,
+            "relation": "7 oclock direction far from"
+        },
+        {
+            "source": 6,
+            "target": 10,
+            "relation": "in front of"
+        },
+        {
+            "source": 11,
+            "target": 6,
+            "relation": "7 oclock direction far from"
+        },
+        {
+            "source": 6,
+            "target": 11,
+            "relation": "in front of"
+        },
+        {
+            "source": 8,
+            "target": 7,
+            "relation": "10 oclock direction near"
+        },
+        {
+            "source": 7,
+            "target": 8,
+            "relation": "to the right of"
+        },
+        {
+            "source": 9,
+            "target": 7,
+            "relation": "12 oclock direction far from"
+        },
+        {
+            "source": 7,
+            "target": 9,
+            "relation": "behind"
+        },
+        {
+            "source": 10,
+            "target": 7,
+            "relation": "8 oclock direction near"
+        },
+        {
+            "source": 7,
+            "target": 10,
+            "relation": "to the right of"
+        },
+        {
+            "source": 11,
+            "target": 7,
+            "relation": "7 oclock direction near"
+        },
+        {
+            "source": 7,
+            "target": 11,
+            "relation": "in front of"
+        },
+        {
+            "source": 8,
+            "target": 9,
+            "relation": "above"
+        },
+        {
+            "source": 9,
+            "target": 8,
+            "relation": "above"
+        },
+        {
+            "source": 8,
+            "target": 10,
+            "relation": "adjacent to"
+        },
+        {
+            "source": 10,
+            "target": 8,
+            "relation": "adjacent to"
+        },
+        {
+            "source": 11,
+            "target": 8,
+            "relation": "7 oclock direction near"
+        },
+        {
+            "source": 8,
+            "target": 11,
+            "relation": "in front of"
+        },
+        {
+            "source": 10,
+            "target": 9,
+            "relation": "8 oclock direction near"
+        },
+        {
+            "source": 9,
+            "target": 10,
+            "relation": "to the right of"
+        },
+        {
+            "source": 11,
+            "target": 9,
+            "relation": "7 oclock direction far from"
+        },
+        {
+            "source": 9,
+            "target": 11,
+            "relation": "in front of"
+        },
+        {
+            "source": 11,
+            "target": 10,
+            "relation": "6 oclock direction near"
+        },
+        {
+            "source": 10,
+            "target": 11,
+            "relation": "in front of"
+        }
+    ]
+}
