@@ -1,0 +1,12 @@
+Object 0: Tire on a cart.
+Object 1: Tire on car.
+Object 2: Yellow toy car with black tires.
+Object 3: Yellow cart with black tires.
+Object 4: Yellow forklift with black tires.
+Object 5: A gray wall.
+Object 6: Blue plastic container with lid.
+Object 7: Cardboard box with flaps.
+Object 8: A blue plastic container.
+Object 9: Cardboard box on counter.
+Object 10: A cart with a purple box on it.
+Object 11: A wall on the side of a building.
