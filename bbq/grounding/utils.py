@@ -15,6 +15,7 @@ def egoview_project(target, anchor, center):
     return target_pos_2d, anchor_pose_2d
 
 def get_semantic_edge(target, anchor, center_point):
+    print("*"*50, "get_semantic_edge called", "*"*50)
     t = {"obj_loc": target}
     a = {"obj_loc": anchor}
     target_pos_2d, anchor_pose_2d = egoview_project(t, a, center_point)

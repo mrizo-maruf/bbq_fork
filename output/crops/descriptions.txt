@@ -1,0 +1,12 @@
+object_1.jpg: Tire on a cart.
+object_2.jpg: Tire on car.
+object_3.jpg: Yellow toy car with black tires.
+object_4.jpg: Yellow cart with black tires.
+object_5.jpg: Yellow forklift on blue floor.
+object_6.jpg: A gray wall.
+object_7.jpg: Blue plastic container with lid.
+object_8.jpg: Cardboard box with flaps.
+object_9.jpg: A blue plastic container.
+object_10.jpg: Cardboard box on counter.
+object_11.jpg: A cart with a purple box on it.
+object_12.jpg: A wall on the side of a building.
