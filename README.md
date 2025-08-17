@@ -26,6 +26,22 @@ Open-Vocabulary Object Grounding <br> with 3D Scene Graph</h1>
 <img src="assets/pipeline.png" width="80%">
 </p>
 
+
+## BBQ with different edge predictors
+
+1. default bbq predictor
+```
+python build_graph.py --input /home/docker_user/BeyondBareQueries/output/scenes/08.17.2025_19:50:13_isaac_warehouse.json --predictor bbq
+```
+2. SceneVerse predictor
+```
+python build_graph.py --input /home/docker_user/BeyondBareQueries/output/scenes/08.17.2025_19:50:13_isaac_warehouse.json --predictor sceneverse
+```
+3. VL-SAT predictor
+```
+tbd
+```
+
 ## Updates
 [2025.01] We are pleased to inform you that our paper has been accepted for presentation at ICRA 2025! 🎉 
 
