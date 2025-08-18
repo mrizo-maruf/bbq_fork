@@ -27,6 +27,7 @@ bbq.egg-info
 *.zip
 *.png
 *.jpg
+*.pth
 
 # Logs and databases #
 ######################

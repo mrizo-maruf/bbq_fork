@@ -15,7 +15,12 @@ from bbq.sceneverse_heuristics.relationships.multi_objs import find_middle_furni
 from bbq.sceneverse_heuristics.relationships.ObjNode import ObjNode
 import networkx as nx
 import bbq.sceneverse_heuristics.relationships.ssg_utils as utils
-
+import gzip
+import pickle
+from src.utils.config import Config
+from src.model.model import MMGNet
+from src.utils import op_utils
+from itertools import product
 
 # --- Helper functions required by the BBQ Heuristic ---
 def egoview_project(target, anchor, center):
@@ -51,20 +56,175 @@ def get_semantic_edge(target, anchor, center_point):
 
     return relations
 
+def convert_numpy_to_list(data):
+    """
+    Recursively converts numpy arrays in a dictionary or list to Python lists.
+    """
+    if isinstance(data, dict):
+        return {k: convert_numpy_to_list(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [convert_numpy_to_list(item) for item in data]
+    elif isinstance(data, np.ndarray):
+        return data.tolist()
+    else:
+        return data
+
+def remove_pcd_from_nodes(nodes):
+    """
+    Creates a new list of nodes with the 'pcd_np' key removed from each.
+    """
+    cleaned_nodes = []
+    keys_to_remove = ['pcd_np', 'pcd_color_np', 'descriptor']
+
+    for node in nodes:
+        # Create a copy of the node dictionary without the 'pcd_np' key
+        node_copy = {key: value for key, value in node.items() if key not in keys_to_remove}
+        cleaned_nodes.append(node_copy)
+    return cleaned_nodes
+
 # --- Engine 1: The AI-based Predictor ---
 class VLSAT_Predictor:
-    def __init__(self, model_path, config_path, rel_list_path):
+    def __init__(self, model_path, config_path, rel_list_path, device="cuda"):
+        """
+        Initializes the VL-SAT model by loading the trained checkpoint.
+        """
         print(f"Loading VL-SAT model from {model_path}...")
-        # TODO: Load your trained VL-SAT model checkpoint and configs here.
-        pass
+        self.device = torch.device(device if torch.cuda.is_available() else "cpu")
+        
+        # --- This logic is ported from vl_sat_inference.py ---
+        # TODO: Replace with your actual VL-SAT file loading logic
+        self.config = Config(config_path)
+        self.config.exp = model_path
+        self.config.MODE = "eval"
+        self.padding = 0.2
+        self.model = MMGNet(self.config)
+        
+        if torch.cuda.is_available() and len(self.config.GPU) > 0:
+            self.config.DEVICE = torch.device("cuda")
+        else:
+            self.config.DEVICE = torch.device("cpu")
+        self.model.load(best=True)
+        self.model.model.eval()
+        
+        # Load the list of possible relationship names
+        with open(rel_list_path, "r") as f:
+            self.relationships_list = f.readlines()
+        
+        self.rel_id_to_rel_name = {
+            i: name.strip()
+            for i, name in enumerate(self.relationships_list[1:])
+        }
+        print(f"VL-SAT Predictor initialized for device '{self.device}'.")
+
+
+    def _preprocess_objects(self, bbq_objects):
+        """
+        Converts a list of BBQ objects into the tensor format required by the VL-SAT model.
+        """
+        num_objects = len(bbq_objects)
+        
+        # Create all possible pairs of objects (e.g., A->B, B->A, A->C, C->A, etc.)
+        edge_indices = list(product(range(num_objects), range(num_objects)))
+        edge_indices = [i for i in edge_indices if i[0] != i[1]]
+        edge_indices = torch.tensor(edge_indices, dtype=torch.long).permute(1, 0)
+
+        obj_points = torch.zeros([num_objects, self.config.dataset.num_points, 3])
+        
+        for i, obj in enumerate(bbq_objects):
+            pcd = obj['pcd_np'] # Get the point cloud from the BBQ object
+            
+            # Downsample or upsample to a fixed number of points (e.g., 1024)
+            if len(pcd) == 0: continue
+            choice = np.random.choice(len(pcd), self.config.dataset.num_points, replace=True)
+            pcd_sampled = pcd[choice, :]
+            
+            # Normalize the point cloud (center it at the origin)
+            mean = np.mean(pcd_sampled, axis=0)
+            pcd_normalized = pcd_sampled - mean
+            
+            obj_points[i] = torch.from_numpy(pcd_normalized.astype(np.float32))
+
+        # The model expects dimensions [num_objects, num_features, num_points]
+        obj_points = obj_points.permute(0, 2, 1)
+
+        # Create other dummy inputs that the model might expect
+        # These are not used by the 3D-only inference model but might be required by the architecture
+        obj_2d_feats = torch.zeros([num_objects, 512])
+        descriptor = torch.zeros([num_objects, 11]) # Geometric descriptor placeholder
+        batch_ids = torch.zeros((num_objects, 1))
+
+        return {
+            "obj_points": obj_points.to(self.device),
+            "edge_indices": edge_indices.to(self.device),
+            "obj_2d_feats": obj_2d_feats.to(self.device),
+            "descriptor": descriptor.to(self.device),
+            "batch_ids": batch_ids.to(self.device)
+        }
+
 
     def predict(self, nodes):
+        """
+        The main prediction method. It takes BBQ objects, preprocesses them,
+        runs inference, and formats the output.
+        """
         print("Predicting edges with VL-SAT...")
-        # TODO: Implement the VL-SAT prediction logic.
+
+        if len(nodes) < 2:
+            print("Not enough nodes to predict relationships.")
+            return []
+            
+        # 1. Preprocess the point clouds into the model's required tensor format
+        preprocessed_data = self._preprocess_objects(nodes)
+        
+        # 2. Run the model to get raw prediction scores
+        if self.model is None:
+            print("--- WARNING: VL-SAT model not loaded. Returning dummy data. ---")
+            # Create fake prediction scores for demonstration purposes
+            num_edges = preprocessed_data["edge_indices"].shape[1]
+            num_relations = len(self.rel_id_to_name)
+            # Simulate random scores, making one score for each edge the highest
+            raw_predictions = torch.rand(num_edges, num_relations)
+            top_indices = torch.randint(0, num_relations, (num_edges,))
+            raw_predictions[torch.arange(num_edges), top_indices] = 2.0 # Make them stand out
+        else:
+            with torch.no_grad():
+                raw_predictions = self.model.model(
+                    preprocessed_data["obj_points"],
+                    preprocessed_data["obj_2d_feats"],
+                    preprocessed_data["edge_indices"],
+                    preprocessed_data["descriptor"],
+                    batch_ids=preprocessed_data["batch_ids"]
+                )
+
+        # 3. Post-process the raw scores into the standard edge format
         edges = []
+        edge_indices = preprocessed_data["edge_indices"].cpu().numpy()
+        
+        # Get the relationship with the highest score for each edge
+        predicted_rel_ids = torch.argmax(raw_predictions, dim=1)
+
+        for i, rel_id in enumerate(predicted_rel_ids):
+            source_idx = edge_indices[0, i]
+            target_idx = edge_indices[1, i]
+            
+            source_node = nodes[source_idx]
+            target_node = nodes[target_idx]
+            
+            relation_name = self.rel_id_to_rel_name.get(rel_id.item(), "unknown")
+            
+            # Optional: Get the confidence score of the prediction
+            confidence_score = torch.softmax(raw_predictions[i], dim=0)[rel_id].item()
+
+            edges.append({
+                "source": source_node['id'],
+                "target": target_node['id'],
+                "relation": relation_name,
+                "score": round(confidence_score, 4)
+            })
+            
         print(f"VL-SAT predicted {len(edges)} edges.")
         return edges
-
+    
 # --- Engine 2: The Advanced Heuristic Predictor ---
 class SceneVerse_Predictor:
     def __init__(self):
@@ -228,30 +388,72 @@ class BBQ_Predictor:
 def build_graph(input_nodes_path, predictor_type):
     output_graph_path = f"output/scenegraphs/{predictor_type}_graph.json"
     print(f"Loading nodes from {input_nodes_path}...")
-    with open(input_nodes_path, 'r') as f:
-        nodes = json.load(f)
+    
+    if predictor_type in ['bbq', 'sceneverse']:
+        # These predictors only need the JSON file with bounding boxes.
+        if not input_nodes_path.endswith('.json'):
+            raise ValueError("For 'bbq' or 'sceneverse' predictors, the --input file must be the ...nodes.json file.")
+        with open(input_nodes_path, 'r') as f:
+            nodes = json.load(f)
+            
+    elif predictor_type == 'vlsat':
+        # The VL-SAT predictor needs the PKL file with full point cloud data.
+        if not input_nodes_path.endswith('.pkl.gz'):
+            raise ValueError("For the 'vlsat' predictor, the --input file must be the frame_last_objects.pkl.gz file.")
+        with gzip.open(input_nodes_path, "rb") as f:
+            data = pickle.load(f)
+            # The object list is nested under the 'objects' key in the pickle file
+            nodes = data['objects']
+    else:
+        raise ValueError("Invalid predictor type.")
+
     print(f"Loaded {len(nodes)} object nodes.")
 
+    
+    # --- INITIALIZE PREDICTOR (This part remains the same) ---
     if predictor_type == 'vlsat':
-        # TODO: Update these paths
         predictor = VLSAT_Predictor(
-            model_path="path/to/your/3dssg_best.ckpt",
-            config_path="path/to/your/mmgnet.json",
-            rel_list_path="path/to/your/relations.txt"
+            model_path="/home/docker_user/BeyondBareQueries/3dssg_best_ckpt",
+            config_path="/home/docker_user/BeyondBareQueries/config/mmgnet.json",
+            rel_list_path="/home/docker_user/BeyondBareQueries/config/relations.txt"
         )
+        print('Pass for now')
     elif predictor_type == 'sceneverse':
         predictor = SceneVerse_Predictor()
     elif predictor_type == 'bbq':
         predictor = BBQ_Predictor()
-    else:
-        raise ValueError(f"Unknown predictor type: '{predictor_type}'.")
+        
+    # with open(input_nodes_path, 'r') as f:
+    #     nodes = json.load(f)
+    # print(f"Loaded {len(nodes)} object nodes.")
+
+    # if predictor_type == 'vlsat':
+    #     # TODO: Update these paths
+    #     predictor = VLSAT_Predictor(
+    #         model_path="path/to/your/3dssg_best.ckpt",
+    #         config_path="path/to/your/mmgnet.json",
+    #         rel_list_path="path/to/your/relations.txt"
+    #     )
+    # elif predictor_type == 'sceneverse':
+    #     predictor = SceneVerse_Predictor()
+    # elif predictor_type == 'bbq':
+    #     predictor = BBQ_Predictor()
+    # else:
+    #     raise ValueError(f"Unknown predictor type: '{predictor_type}'.")
 
     edges = predictor.predict(nodes)
     scene_graph = {"nodes": nodes, "edges": edges}
 
+    nodes_without_pcd = remove_pcd_from_nodes(nodes)
+
+    scene_graph = {"nodes": nodes_without_pcd, "edges": edges}
+    
+    scene_graph_serializable = convert_numpy_to_list(scene_graph)
+
     print(f"Saving complete scene graph to {output_graph_path}...")
     with open(output_graph_path, 'w') as f:
-        json.dump(scene_graph, f, indent=4)
+        # Save the translated, serializable version of the graph
+        json.dump(scene_graph_serializable, f, indent=4)
     print("Done!")
 
 if __name__ == "__main__":
