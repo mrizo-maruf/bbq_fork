@@ -39,7 +39,7 @@ python build_graph.py --input /home/docker_user/BeyondBareQueries/output/scenes/
 ```
 3. VL-SAT predictor
 ```
-tbd
+python build_graph.py --input /home/docker_user/BeyondBareQueries/output/frame_last_objects.pkl.gz --predictor vlsat
 ```
 
 ## Updates
