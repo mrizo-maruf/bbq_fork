@@ -21,6 +21,8 @@ from src.utils.config import Config
 from src.model.model import MMGNet
 from src.utils import op_utils
 from itertools import product
+import open3d as o3d
+from collections import Counter
 
 # --- Helper functions required by the BBQ Heuristic ---
 def egoview_project(target, anchor, center):
@@ -116,6 +118,58 @@ class VLSAT_Predictor:
         }
         print(f"VL-SAT Predictor initialized for device '{self.device}'.")
 
+    
+    def _bbox_center_from_bbox_np(bbox_np):
+        """
+        bbox_np: (N,3) numpy array of bounding box corner points (e.g. 8 corners).
+        Returns center (3,)
+        """
+        pts = np.asarray(bbox_np)
+        return pts.mean(axis=0)
+
+
+    def _pcd_denoise_dbscan(pcd: o3d.geometry.PointCloud, eps=0.02, min_points=10) -> o3d.geometry.PointCloud:
+        ### Remove noise via clustering
+        pcd_clusters = pcd.cluster_dbscan(
+            eps=eps,
+            min_points=min_points,
+        )
+        
+        # Convert to numpy arrays
+        obj_points = np.asarray(pcd.points)
+        #obj_colors = np.asarray(pcd.colors)
+        pcd_clusters = np.array(pcd_clusters)
+
+        # Count all labels in the cluster
+        counter = Counter(pcd_clusters)
+
+        # Remove the noise label
+        if counter and (-1 in counter):
+            del counter[-1]
+
+        if counter:
+            # Find the label of the largest cluster
+            most_common_label, _ = counter.most_common(1)[0]
+            
+            # Create mask for points in the largest cluster
+            largest_mask = pcd_clusters == most_common_label
+
+            # Apply mask
+            largest_cluster_points = obj_points[largest_mask]
+            #largest_cluster_colors = obj_colors[largest_mask]
+            
+            # If the largest cluster is too small, return the original point cloud
+            if len(largest_cluster_points) < 5:
+                return pcd
+
+            # Create a new PointCloud object
+            largest_cluster_pcd = o3d.geometry.PointCloud()
+            largest_cluster_pcd.points = o3d.utility.Vector3dVector(largest_cluster_points)
+            
+            pcd = largest_cluster_pcd
+            
+        return pcd
+
 
     def _preprocess_objects(self, bbq_objects):
         """
@@ -153,14 +207,131 @@ class VLSAT_Predictor:
         descriptor = torch.zeros([num_objects, 11]) # Geometric descriptor placeholder
         batch_ids = torch.zeros((num_objects, 1))
 
-        return {
-            "obj_points": obj_points.to(self.device),
-            "edge_indices": edge_indices.to(self.device),
-            "obj_2d_feats": obj_2d_feats.to(self.device),
-            "descriptor": descriptor.to(self.device),
-            "batch_ids": batch_ids.to(self.device)
-        }
+        # return {
+        #     "obj_points": obj_points.to(self.device),
+        #     "edge_indices": edge_indices.to(self.device),
+        #     "obj_2d_feats": obj_2d_feats.to(self.device),
+        #     "descriptor": descriptor.to(self.device),
+        #     "batch_ids": batch_ids.to(self.device)
+        # }
 
+        pcds = {}
+        for obj_id, obj in enumerate(bbq_objects):
+            pcds[obj_id] = {}
+            pcd_o3d = o3d.geometry.PointCloud()
+            pcd_o3d.points = o3d.utility.Vector3dVector(obj['pcd_np'])
+            pcd = self._pcd_denoise_dbscan(pcd_o3d)
+            
+            # TO-DO: Add pose information if available
+            center = self._bbox_center_from_bbox_np(obj['bbox_np'])
+            obj['pose'] = center.tolist() 
+            pose = obj["pose"]
+            
+            # random
+            # pose = [random.randint(10, 50) for _ in range(3)]
+            
+
+            pcd_array = np.array(pcd.points)
+            
+            size = [0.3, 0.3, 0.15]
+            nx, ny, nz = (16, 16, 16)
+            
+            x = np.linspace(pose[0] - size[0]/2, pose[0] + size[0]/2, nx)
+            y = np.linspace(pose[1] - size[1]/2, pose[1] + size[1]/2, ny)
+            z = np.linspace(pose[2] - size[2]/2, pose[2] + size[2]/2, nz)
+            xv, yv, zv = np.meshgrid(x, y, z)
+            
+            # print(x.shape, y.shape, z.shape)
+            # print(xv)
+            # print(xv.shape, yv.shape, zv.shape)
+            #print(xv.flatten())
+            
+            grid_pc = np.stack((xv.flatten(), yv.flatten(), zv.flatten()), axis=1)
+            pcds[obj_id]['point_cloud'] = grid_pc
+            
+            pcds[obj_id]['position'] = [
+                    np.round(np.mean(pcds[obj_id]['point_cloud'][:, 0]),2),
+                    np.round(np.mean(pcds[obj_id]['point_cloud'][:, 1]),2),
+                    np.round(np.mean(pcds[obj_id]['point_cloud'][:, 2]),2),
+                    ]
+        return pcds
+
+    def preprocess_poinclouds(self, points, num_points):
+        assert len(points) > 1, "Number of objects should be at least 2"
+        edge_indices = list(product(list(range(len(points))), list(range(len(points)))))
+        edge_indices = [i for i in edge_indices if i[0]!=i[1]]
+
+        num_objects = len(points)
+        dim_point = points[0].shape[-1]
+
+        instances_box = dict()
+        obj_points = torch.zeros([num_objects, num_points, dim_point])
+        descriptor = torch.zeros([num_objects, 11])
+
+        obj_2d_feats = np.zeros([num_objects, 512])
+
+        for i, pcd in enumerate(points):
+            # get node point
+            min_box = np.min(pcd, 0) - self.padding
+            max_box = np.max(pcd, 0) + self.padding
+            instances_box[i] = (min_box, max_box)
+            choice = np.random.choice(len(pcd), num_points, replace=True)
+            pcd = pcd[choice, :]
+            descriptor[i] = op_utils.gen_descriptor(torch.from_numpy(pcd))
+            pcd = torch.from_numpy(pcd.astype(np.float32))
+            pcd = self.zero_mean(pcd)
+            obj_points[i] = pcd
+
+        edge_indices = torch.tensor(edge_indices, dtype=torch.long).permute(1, 0)
+        obj_2d_feats = torch.from_numpy(obj_2d_feats.astype(np.float32))    
+        obj_points = obj_points.permute(0, 2, 1)
+        batch_ids = torch.zeros((num_objects, 1))
+        return obj_points, obj_2d_feats, edge_indices, descriptor, batch_ids
+
+    def predict_relations(self, obj_points, obj_2d_feats, edge_indices, descriptor, batch_ids):
+        obj_points = obj_points.to(self.config.DEVICE)
+        obj_2d_feats = obj_2d_feats.to(self.config.DEVICE)
+        edge_indices = edge_indices.to(self.config.DEVICE)
+        descriptor = descriptor.to(self.config.DEVICE)
+        batch_ids = batch_ids.to(self.config.DEVICE)
+        with torch.no_grad():
+            rel_cls_3d = self.model.model(
+                obj_points, obj_2d_feats, edge_indices, descriptor, batch_ids=batch_ids
+            )
+        return rel_cls_3d
+
+    def save_relations(self, tracking_ids, timestamps, class_names, predicted_relations, edge_indices):
+        saved_relations = []
+        for k in range(predicted_relations.shape[0]):
+            idx_1 = edge_indices[0][k].item()
+            idx_2 = edge_indices[1][k].item()
+
+            id_1 = tracking_ids[idx_1]
+            id_2 = tracking_ids[idx_2]
+
+            timestamp_1 = timestamps[idx_1]
+            timestamp_2 = timestamps[idx_2]
+
+            class_name_1 = class_names[idx_1]
+            class_name_2 = class_names[idx_2]
+
+            rel_id = torch.argmax(predicted_relations, dim=1)[k].item()
+            rel_name = self.rel_id_to_rel_name[rel_id]
+
+            rel_dict = {
+                #"id_1": id_1,
+                #"timestamp_1": timestamp_1,
+                "class_name_1": class_name_1,
+                "rel_name": rel_name,
+                #"id_2": id_2,
+                #"timestamp_2": timestamp_2,
+                "class_name_2": class_name_2,
+                #"rel_id": rel_id,
+                
+            }
+            saved_relations.append(rel_dict)
+
+        return saved_relations
 
     def predict(self, nodes):
         """
@@ -173,57 +344,33 @@ class VLSAT_Predictor:
             print("Not enough nodes to predict relationships.")
             return []
             
-        # 1. Preprocess the point clouds into the model's required tensor format
+        # 1. Preprocess the nodes into point clouds and other required formats
         preprocessed_data = self._preprocess_objects(nodes)
+        pcds_list = [pcd['point_cloud'] for pcd in preprocessed_data.values()]
         
-        # 2. Run the model to get raw prediction scores
-        if self.model is None:
-            print("--- WARNING: VL-SAT model not loaded. Returning dummy data. ---")
-            # Create fake prediction scores for demonstration purposes
-            num_edges = preprocessed_data["edge_indices"].shape[1]
-            num_relations = len(self.rel_id_to_name)
-            # Simulate random scores, making one score for each edge the highest
-            raw_predictions = torch.rand(num_edges, num_relations)
-            top_indices = torch.randint(0, num_relations, (num_edges,))
-            raw_predictions[torch.arange(num_edges), top_indices] = 2.0 # Make them stand out
-        else:
-            with torch.no_grad():
-                raw_predictions = self.model.model(
-                    preprocessed_data["obj_points"],
-                    preprocessed_data["obj_2d_feats"],
-                    preprocessed_data["edge_indices"],
-                    preprocessed_data["descriptor"],
-                    batch_ids=preprocessed_data["batch_ids"]
-                )
-
-        # 3. Post-process the raw scores into the standard edge format
-        edges = []
-        edge_indices = preprocessed_data["edge_indices"].cpu().numpy()
+        # 2. Preprocess the point clouds for the model
+        obj_points, obj_2d_feats, edge_indices, descriptor, batch_ids = self.preprocess_poinclouds(
+            pcds_list,
+            self.config.dataset.num_points
+        )
         
-        # Get the relationship with the highest score for each edge
-        predicted_rel_ids = torch.argmax(raw_predictions, dim=1)
+        # 3. Predict
+        predicted_relations = self.predict_relations(obj_points, obj_2d_feats, edge_indices, descriptor, batch_ids)
+        # topk_values, topk_indices = torch.topk(predicted_relations, 5, dim=1,  largest=True)
+        # print(topk_indices, topk_values)
+        
+        # 4. Save the relations in a standardized format
+        tracking_ids = [str(i) for i in range(len(pcds_list))]
+        timestamps = ["001539" for i in range(len(pcds_list))]
+        class_names = [f"class {i}" for i in range(len(pcds_list))]
+        saved_relations = self.save_relations(tracking_ids, timestamps, class_names, predicted_relations, edge_indices)
+        
+        with open("output/scenegraphs/saved_relations.json", "w") as f:
+            json.dump(saved_relations, f, indent=4)
 
-        for i, rel_id in enumerate(predicted_rel_ids):
-            source_idx = edge_indices[0, i]
-            target_idx = edge_indices[1, i]
-            
-            source_node = nodes[source_idx]
-            target_node = nodes[target_idx]
-            
-            relation_name = self.rel_id_to_rel_name.get(rel_id.item(), "unknown")
-            
-            # Optional: Get the confidence score of the prediction
-            confidence_score = torch.softmax(raw_predictions[i], dim=0)[rel_id].item()
-
-            edges.append({
-                "source": source_node['id'],
-                "target": target_node['id'],
-                "relation": relation_name,
-                "score": round(confidence_score, 4)
-            })
-            
-        print(f"VL-SAT predicted {len(edges)} edges.")
-        return edges
+        print("Saved to output/scenegraphs/saved_relations.json")
+        
+        return saved_relations
     
 # --- Engine 2: The Advanced Heuristic Predictor ---
 class SceneVerse_Predictor:
@@ -413,34 +560,15 @@ def build_graph(input_nodes_path, predictor_type):
     # --- INITIALIZE PREDICTOR (This part remains the same) ---
     if predictor_type == 'vlsat':
         predictor = VLSAT_Predictor(
-            model_path="/home/docker_user/BeyondBareQueries/3dssg_best_ckpt",
-            config_path="/home/docker_user/BeyondBareQueries/config/mmgnet.json",
-            rel_list_path="/home/docker_user/BeyondBareQueries/config/relations.txt"
+            model_path="/home/rizo/mipt_ccm/bbq_fork/3dssg_best_ckpt",
+            config_path="/home/rizo/mipt_ccm/bbq_fork/config/mmgnet.json",
+            rel_list_path="/home/rizo/mipt_ccm/bbq_fork/config/relations.txt"
         )
-        print('Pass for now')
     elif predictor_type == 'sceneverse':
         predictor = SceneVerse_Predictor()
     elif predictor_type == 'bbq':
         predictor = BBQ_Predictor()
         
-    # with open(input_nodes_path, 'r') as f:
-    #     nodes = json.load(f)
-    # print(f"Loaded {len(nodes)} object nodes.")
-
-    # if predictor_type == 'vlsat':
-    #     # TODO: Update these paths
-    #     predictor = VLSAT_Predictor(
-    #         model_path="path/to/your/3dssg_best.ckpt",
-    #         config_path="path/to/your/mmgnet.json",
-    #         rel_list_path="path/to/your/relations.txt"
-    #     )
-    # elif predictor_type == 'sceneverse':
-    #     predictor = SceneVerse_Predictor()
-    # elif predictor_type == 'bbq':
-    #     predictor = BBQ_Predictor()
-    # else:
-    #     raise ValueError(f"Unknown predictor type: '{predictor_type}'.")
-
     edges = predictor.predict(nodes)
     scene_graph = {"nodes": nodes, "edges": edges}
 
@@ -458,7 +586,6 @@ def build_graph(input_nodes_path, predictor_type):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Build a complete 3D scene graph with nodes and edges.")
-    parser.add_argument("--input", required=True, help="Path to the nodes-only JSON file generated by main.py.")
     parser.add_argument(
         "--predictor", 
         required=True, 
@@ -467,7 +594,9 @@ if __name__ == "__main__":
     )
     
     args = parser.parse_args()
+    input_file = "/home/rizo/mipt_ccm/warehouse/code_pack/BeyondBareQueries/output/scenes/08.17.2025_23:35:41_isaac_warehouse_objects.pkl.gz"
+    
     build_graph(
-        input_nodes_path=args.input,
+        input_nodes_path=input_file,
         predictor_type=args.predictor
     )
