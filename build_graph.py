@@ -181,44 +181,7 @@ class VLSAT_Predictor:
         Converts a list of BBQ objects into the tensor format required by the VL-SAT model.
         """
         num_objects = len(bbq_objects)
-        
-        # Create all possible pairs of objects (e.g., A->B, B->A, A->C, C->A, etc.)
-        edge_indices = list(product(range(num_objects), range(num_objects)))
-        edge_indices = [i for i in edge_indices if i[0] != i[1]]
-        edge_indices = torch.tensor(edge_indices, dtype=torch.long).permute(1, 0)
-
-        obj_points = torch.zeros([num_objects, self.config.dataset.num_points, 3])
-        
-        for i, obj in enumerate(bbq_objects):
-            pcd = obj['pcd_np'] # Get the point cloud from the BBQ object
-            
-            # Downsample or upsample to a fixed number of points (e.g., 1024)
-            if len(pcd) == 0: continue
-            choice = np.random.choice(len(pcd), self.config.dataset.num_points, replace=True)
-            pcd_sampled = pcd[choice, :]
-            
-            # Normalize the point cloud (center it at the origin)
-            mean = np.mean(pcd_sampled, axis=0)
-            pcd_normalized = pcd_sampled - mean
-            
-            obj_points[i] = torch.from_numpy(pcd_normalized.astype(np.float32))
-
-        # The model expects dimensions [num_objects, num_features, num_points]
-        obj_points = obj_points.permute(0, 2, 1)
-
-        # Create other dummy inputs that the model might expect
-        # These are not used by the 3D-only inference model but might be required by the architecture
-        obj_2d_feats = torch.zeros([num_objects, 512])
-        descriptor = torch.zeros([num_objects, 11]) # Geometric descriptor placeholder
-        batch_ids = torch.zeros((num_objects, 1))
-
-        # return {
-        #     "obj_points": obj_points.to(self.device),
-        #     "edge_indices": edge_indices.to(self.device),
-        #     "obj_2d_feats": obj_2d_feats.to(self.device),
-        #     "descriptor": descriptor.to(self.device),
-        #     "batch_ids": batch_ids.to(self.device)
-        # }
+        print(f"Num objects: {num_objects}")
 
         pcds = {}
         for obj_id, obj in enumerate(bbq_objects):
@@ -233,7 +196,7 @@ class VLSAT_Predictor:
             obj['pose'] = center.tolist() 
             pose = obj["pose"]
             
-            # random
+            # random pose
             # pose = [random.randint(10, 50) for _ in range(3)]
             
 
@@ -264,6 +227,9 @@ class VLSAT_Predictor:
 
     def preprocess_poinclouds(self, points, num_points):
         assert len(points) > 1, "Number of objects should be at least 2"
+        print(f"Num of points: {num_points}")
+        print(f"Shape: {points[0].shape}")
+        
         edge_indices = list(product(list(range(len(points))), list(range(len(points)))))
         edge_indices = [i for i in edge_indices if i[0]!=i[1]]
 
@@ -352,7 +318,10 @@ class VLSAT_Predictor:
             
         # 1. Preprocess the nodes into point clouds and other required formats
         preprocessed_data = self._preprocess_objects(nodes)
-        pcds_list = [pcd['point_cloud'] for pcd in preprocessed_data.values()]
+        pcds_list = [_pcd['point_cloud'] for _pcd in preprocessed_data.values()]
+        
+        print(f"pcds_list len: {len(pcds_list)}, {type(pcds_list[0])}")
+        print(f"pcds_list shapes: {[_pcd.shape for _pcd in pcds_list]}")
         
         # 2. Preprocess the point clouds for the model
         obj_points, obj_2d_feats, edge_indices, descriptor, batch_ids = self.preprocess_poinclouds(
@@ -362,13 +331,14 @@ class VLSAT_Predictor:
         
         # 3. Predict
         predicted_relations = self.predict_relations(obj_points, obj_2d_feats, edge_indices, descriptor, batch_ids)
-        # topk_values, topk_indices = torch.topk(predicted_relations, 5, dim=1,  largest=True)
+        topk_values, topk_indices = torch.topk(predicted_relations, 5, dim=1,  largest=True)
         # print(topk_indices, topk_values)
         
         # 4. Save the relations in a standardized format
         tracking_ids = [str(i) for i in range(len(pcds_list))]
         timestamps = ["001539" for i in range(len(pcds_list))]
         class_names = [f"class {i}" for i in range(len(pcds_list))]
+        
         saved_relations = self.save_relations(tracking_ids, timestamps, class_names, predicted_relations, edge_indices)
         
         with open("output/scenegraphs/saved_relations.json", "w") as f:
