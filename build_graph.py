@@ -84,9 +84,52 @@ def remove_pcd_from_nodes(nodes):
         cleaned_nodes.append(node_copy)
     return cleaned_nodes
 
+def pcd_denoise_dbscan(pcd: o3d.geometry.PointCloud, eps=0.02, min_points=10) -> o3d.geometry.PointCloud:
+    ### Remove noise via clustering
+    pcd_clusters = pcd.cluster_dbscan(
+        eps=eps,
+        min_points=min_points,
+    )
+    
+    # Convert to numpy arrays
+    obj_points = np.asarray(pcd.points)
+    #obj_colors = np.asarray(pcd.colors)
+    pcd_clusters = np.array(pcd_clusters)
+
+    # Count all labels in the cluster
+    counter = Counter(pcd_clusters)
+
+    # Remove the noise label
+    if counter and (-1 in counter):
+        del counter[-1]
+
+    if counter:
+        # Find the label of the largest cluster
+        most_common_label, _ = counter.most_common(1)[0]
+        
+        # Create mask for points in the largest cluster
+        largest_mask = pcd_clusters == most_common_label
+
+        # Apply mask
+        largest_cluster_points = obj_points[largest_mask]
+        #largest_cluster_colors = obj_colors[largest_mask]
+        
+        # If the largest cluster is too small, return the original point cloud
+        if len(largest_cluster_points) < 5:
+            return pcd
+
+        # Create a new PointCloud object
+        largest_cluster_pcd = o3d.geometry.PointCloud()
+        largest_cluster_pcd.points = o3d.utility.Vector3dVector(largest_cluster_points)
+        
+        pcd = largest_cluster_pcd
+        
+    return pcd
+
 # --- Engine 1: The AI-based Predictor ---
 class VLSAT_Predictor:
-    def __init__(self, model_path, config_path, rel_list_path, device="cuda"):
+    
+    def __init__(self, config_path, model_path, rel_list_path, device="cuda"):
         """
         Initializes the VL-SAT model by loading the trained checkpoint.
         """
@@ -94,7 +137,6 @@ class VLSAT_Predictor:
         self.device = torch.device(device if torch.cuda.is_available() else "cpu")
         
         # --- This logic is ported from vl_sat_inference.py ---
-        # TODO: Replace with your actual VL-SAT file loading logic
         self.config = Config(config_path)
         self.config.exp = model_path
         self.config.MODE = "eval"
@@ -117,7 +159,6 @@ class VLSAT_Predictor:
             for i, name in enumerate(self.relationships_list[1:])
         }
         print(f"VL-SAT Predictor initialized for device '{self.device}'.")
-
     
     def _bbox_center_from_bbox_np(self, bbox_np):
         """
@@ -126,50 +167,6 @@ class VLSAT_Predictor:
         """
         pts = np.asarray(bbox_np)
         return pts.mean(axis=0)
-
-
-    def pcd_denoise_dbscan(self, _pcd, eps=0.02, min_points=10) -> o3d.geometry.PointCloud:
-        ### Remove noise via clustering
-        # print("Type", '**'*30, type(_pcd))
-        pcd_clusters = _pcd.cluster_dbscan(
-            eps=eps,
-            min_points=min_points,
-        )
-        
-        # Convert to numpy arrays
-        obj_points = np.asarray(_pcd.points)
-        #obj_colors = np.asarray(pcd.colors)
-        pcd_clusters = np.array(pcd_clusters)
-
-        # Count all labels in the cluster
-        counter = Counter(pcd_clusters)
-
-        # Remove the noise label
-        if counter and (-1 in counter):
-            del counter[-1]
-
-        if counter:
-            # Find the label of the largest cluster
-            most_common_label, _ = counter.most_common(1)[0]
-            
-            # Create mask for points in the largest cluster
-            largest_mask = pcd_clusters == most_common_label
-
-            # Apply mask
-            largest_cluster_points = obj_points[largest_mask]
-            #largest_cluster_colors = obj_colors[largest_mask]
-            
-            # If the largest cluster is too small, return the original point cloud
-            if len(largest_cluster_points) < 5:
-                return _pcd
-
-            # Create a new PointCloud object
-            largest_cluster_pcd = o3d.geometry.PointCloud()
-            largest_cluster_pcd.points = o3d.utility.Vector3dVector(largest_cluster_points)
-            
-            _pcd = largest_cluster_pcd
-            
-        return _pcd
 
     def zero_mean(self, point):
         mean = torch.mean(point, dim=0)
@@ -189,7 +186,7 @@ class VLSAT_Predictor:
             pcd_o3d = o3d.geometry.PointCloud()
             pcd_o3d.points = o3d.utility.Vector3dVector(obj['pcd_np'])
             # print(f"Type: {'*'*30} {type(pcd_o3d)}")
-            pointcloud_ = self.pcd_denoise_dbscan(pcd_o3d)
+            pointcloud_ = pcd_denoise_dbscan(pcd_o3d)
             
             # TO-DO: Add pose information if available
             center = self._bbox_center_from_bbox_np(obj['bbox_np'])
@@ -227,8 +224,13 @@ class VLSAT_Predictor:
 
     def preprocess_poinclouds(self, points, num_points):
         assert len(points) > 1, "Number of objects should be at least 2"
-        print(f"Num of points: {num_points}")
-        print(f"Shape: {points[0].shape}")
+        print(num_points, "num_points")
+        
+        # print("points shape:", [p.shape for p in points])
+        # print("points length:", len(points))
+        # print("points[0] shape:", points[0].shape)
+        # print("points[0] first 5 points:", points[0][:5])
+        # print("points[-1] first 5 points:", points[-1][:5])
         
         edge_indices = list(product(list(range(len(points))), list(range(len(points)))))
         edge_indices = [i for i in edge_indices if i[0]!=i[1]]
@@ -237,6 +239,8 @@ class VLSAT_Predictor:
         dim_point = points[0].shape[-1]
 
         instances_box = dict()
+        print("num_objects:", num_objects, "dim_point:", dim_point, "num_points:", num_points)
+        
         obj_points = torch.zeros([num_objects, num_points, dim_point])
         descriptor = torch.zeros([num_objects, 11])
 
@@ -246,10 +250,15 @@ class VLSAT_Predictor:
             # get node point
             min_box = np.min(pcd, 0) - self.padding
             max_box = np.max(pcd, 0) + self.padding
+            
             instances_box[i] = (min_box, max_box)
+            
             choice = np.random.choice(len(pcd), num_points, replace=True)
+            print(f"choice shape: {choice.shape}, choice first 5: {choice[:5]}")
+
             pcd = pcd[choice, :]
             descriptor[i] = op_utils.gen_descriptor(torch.from_numpy(pcd))
+            
             pcd = torch.from_numpy(pcd.astype(np.float32))
             pcd = self.zero_mean(pcd)
             obj_points[i] = pcd
@@ -259,13 +268,21 @@ class VLSAT_Predictor:
         obj_points = obj_points.permute(0, 2, 1)
         batch_ids = torch.zeros((num_objects, 1))
         return obj_points, obj_2d_feats, edge_indices, descriptor, batch_ids
-
+    
     def predict_relations(self, obj_points, obj_2d_feats, edge_indices, descriptor, batch_ids):
+        print("obj_points shape:", obj_points.shape, "obj_points:", obj_points[-1, :, 0:5])
         obj_points = obj_points.to(self.config.DEVICE)
         obj_2d_feats = obj_2d_feats.to(self.config.DEVICE)
         edge_indices = edge_indices.to(self.config.DEVICE)
         descriptor = descriptor.to(self.config.DEVICE)
         batch_ids = batch_ids.to(self.config.DEVICE)
+        
+        # print("obj_points shape:", obj_points.shape, "obj_points:", obj_points[-1, :, 0:5])
+        # print("obj_2d_feats shape:", obj_2d_feats.shape, "obj_2d_feats:", obj_2d_feats[0])
+        # print("edge_indices shape:", edge_indices.shape, "edge_indices:", edge_indices[0])
+        # print("descriptor shape:", descriptor.shape, "descriptor0:", descriptor[0])
+        # print("batch_ids shape:", batch_ids.shape, "batch_ids:", batch_ids)
+        
         with torch.no_grad():
             rel_cls_3d = self.model.model(
                 obj_points, obj_2d_feats, edge_indices, descriptor, batch_ids=batch_ids
@@ -538,7 +555,7 @@ def build_graph(input_nodes_path, predictor_type):
         predictor = VLSAT_Predictor(
             model_path="./3dssg_best_ckpt",
             config_path="./config/mmgnet.json",
-            rel_list_path="./config/relations.txt"
+            rel_list_path="./config/relationships.txt"
         )
     elif predictor_type == 'sceneverse':
         predictor = SceneVerse_Predictor()
