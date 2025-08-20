@@ -119,7 +119,7 @@ class VLSAT_Predictor:
         print(f"VL-SAT Predictor initialized for device '{self.device}'.")
 
     
-    def _bbox_center_from_bbox_np(bbox_np):
+    def _bbox_center_from_bbox_np(self, bbox_np):
         """
         bbox_np: (N,3) numpy array of bounding box corner points (e.g. 8 corners).
         Returns center (3,)
@@ -128,15 +128,16 @@ class VLSAT_Predictor:
         return pts.mean(axis=0)
 
 
-    def _pcd_denoise_dbscan(pcd: o3d.geometry.PointCloud, eps=0.02, min_points=10) -> o3d.geometry.PointCloud:
+    def pcd_denoise_dbscan(self, _pcd, eps=0.02, min_points=10) -> o3d.geometry.PointCloud:
         ### Remove noise via clustering
-        pcd_clusters = pcd.cluster_dbscan(
+        # print("Type", '**'*30, type(_pcd))
+        pcd_clusters = _pcd.cluster_dbscan(
             eps=eps,
             min_points=min_points,
         )
         
         # Convert to numpy arrays
-        obj_points = np.asarray(pcd.points)
+        obj_points = np.asarray(_pcd.points)
         #obj_colors = np.asarray(pcd.colors)
         pcd_clusters = np.array(pcd_clusters)
 
@@ -160,17 +161,21 @@ class VLSAT_Predictor:
             
             # If the largest cluster is too small, return the original point cloud
             if len(largest_cluster_points) < 5:
-                return pcd
+                return _pcd
 
             # Create a new PointCloud object
             largest_cluster_pcd = o3d.geometry.PointCloud()
             largest_cluster_pcd.points = o3d.utility.Vector3dVector(largest_cluster_points)
             
-            pcd = largest_cluster_pcd
+            _pcd = largest_cluster_pcd
             
-        return pcd
+        return _pcd
 
-
+    def zero_mean(self, point):
+        mean = torch.mean(point, dim=0)
+        point -= mean.unsqueeze(0)
+        return point
+    
     def _preprocess_objects(self, bbq_objects):
         """
         Converts a list of BBQ objects into the tensor format required by the VL-SAT model.
@@ -220,7 +225,8 @@ class VLSAT_Predictor:
             pcds[obj_id] = {}
             pcd_o3d = o3d.geometry.PointCloud()
             pcd_o3d.points = o3d.utility.Vector3dVector(obj['pcd_np'])
-            pcd = self._pcd_denoise_dbscan(pcd_o3d)
+            # print(f"Type: {'*'*30} {type(pcd_o3d)}")
+            pointcloud_ = self.pcd_denoise_dbscan(pcd_o3d)
             
             # TO-DO: Add pose information if available
             center = self._bbox_center_from_bbox_np(obj['bbox_np'])
@@ -231,7 +237,7 @@ class VLSAT_Predictor:
             # pose = [random.randint(10, 50) for _ in range(3)]
             
 
-            pcd_array = np.array(pcd.points)
+            pcd_array = np.array(pointcloud_.points)
             
             size = [0.3, 0.3, 0.15]
             nx, ny, nz = (16, 16, 16)
@@ -533,7 +539,7 @@ class BBQ_Predictor:
 
 # --- Main Orchestration Logic ---
 def build_graph(input_nodes_path, predictor_type):
-    output_graph_path = f"output/scenegraphs/{predictor_type}_graph.json"
+    output_graph_path = f"./output/scenegraphs/{predictor_type}_graph.json"
     print(f"Loading nodes from {input_nodes_path}...")
     
     if predictor_type in ['bbq', 'sceneverse']:
@@ -560,9 +566,9 @@ def build_graph(input_nodes_path, predictor_type):
     # --- INITIALIZE PREDICTOR (This part remains the same) ---
     if predictor_type == 'vlsat':
         predictor = VLSAT_Predictor(
-            model_path="/home/rizo/mipt_ccm/bbq_fork/3dssg_best_ckpt",
-            config_path="/home/rizo/mipt_ccm/bbq_fork/config/mmgnet.json",
-            rel_list_path="/home/rizo/mipt_ccm/bbq_fork/config/relations.txt"
+            model_path="./3dssg_best_ckpt",
+            config_path="./config/mmgnet.json",
+            rel_list_path="./config/relations.txt"
         )
     elif predictor_type == 'sceneverse':
         predictor = SceneVerse_Predictor()
@@ -570,11 +576,12 @@ def build_graph(input_nodes_path, predictor_type):
         predictor = BBQ_Predictor()
         
     edges = predictor.predict(nodes)
-    scene_graph = {"nodes": nodes, "edges": edges}
+    # scene_graph = {"nodes": nodes, "edges": edges}
 
-    nodes_without_pcd = remove_pcd_from_nodes(nodes)
+    # nodes_without_pcd = remove_pcd_from_nodes(nodes)
 
-    scene_graph = {"nodes": nodes_without_pcd, "edges": edges}
+    # scene_graph = {"nodes": nodes_without_pcd, "edges": edges}
+    scene_graph = {"edges": edges}
     
     scene_graph_serializable = convert_numpy_to_list(scene_graph)
 
@@ -594,7 +601,7 @@ if __name__ == "__main__":
     )
     
     args = parser.parse_args()
-    input_file = "/home/rizo/mipt_ccm/warehouse/code_pack/BeyondBareQueries/output/scenes/08.17.2025_23:35:41_isaac_warehouse_objects.pkl.gz"
+    input_file = "/home/docker_user/BeyondBareQueries/output/frame_last_objects.pkl.gz"
     
     build_graph(
         input_nodes_path=input_file,
