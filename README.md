@@ -29,17 +29,17 @@ Open-Vocabulary Object Grounding <br> with 3D Scene Graph</h1>
 
 ## BBQ with different edge predictors
 
-1. default bbq predictor
+1. default bbq predictor, make sure to change the .json path of nodes in `build_graph`
 ```
-python build_graph.py --input /home/docker_user/BeyondBareQueries/output/scenes/08.17.2025_19:50:13_isaac_warehouse.json --predictor bbq
+python build_graph.py --predictor bbq
 ```
-2. SceneVerse predictor
+2. SceneVerse predictor, make sure to change the .json path of nodes in `build_graph`
 ```
-python build_graph.py --input /home/docker_user/BeyondBareQueries/output/scenes/08.17.2025_19:50:13_isaac_warehouse.json --predictor sceneverse
+python build_graph.py --predictor sceneverse
 ```
 3. VL-SAT predictor
 ```
-python build_graph.py --input /home/docker_user/BeyondBareQueries/output/frame_last_objects.pkl.gz --predictor vlsat
+python build_graph.py --predictor vlsat
 ```
 
 ## Updates

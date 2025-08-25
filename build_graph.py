@@ -537,6 +537,7 @@ def build_graph(input_nodes_path, predictor_type):
     print(f"Loading nodes from {input_nodes_path}...")
     
     if predictor_type in ['bbq', 'sceneverse']:
+        input_nodes_path = "/home/rizo/mipt_ccm/bbq_fork/output/scenes/08.17.2025_23:35:41_isaac_warehouse.json"
         # These predictors only need the JSON file with bounding boxes.
         if not input_nodes_path.endswith('.json'):
             raise ValueError("For 'bbq' or 'sceneverse' predictors, the --input file must be the ...nodes.json file.")
