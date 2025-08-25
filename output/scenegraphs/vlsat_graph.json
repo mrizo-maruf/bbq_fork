@@ -2,257 +2,257 @@
     "edges": [
         {
             "class_name_1": "class 0",
-            "rel_name": "leaning against",
+            "rel_name": "behind",
             "class_name_2": "class 1"
         },
         {
             "class_name_1": "class 0",
-            "rel_name": "leaning against",
+            "rel_name": "behind",
             "class_name_2": "class 2"
         },
         {
             "class_name_1": "class 0",
-            "rel_name": "leaning against",
+            "rel_name": "behind",
             "class_name_2": "class 3"
         },
         {
             "class_name_1": "class 0",
-            "rel_name": "leaning against",
+            "rel_name": "left",
             "class_name_2": "class 4"
         },
         {
             "class_name_1": "class 0",
-            "rel_name": "leaning against",
+            "rel_name": "hanging on",
             "class_name_2": "class 5"
         },
         {
             "class_name_1": "class 0",
-            "rel_name": "leaning against",
+            "rel_name": "hanging on",
             "class_name_2": "class 6"
         },
         {
             "class_name_1": "class 0",
-            "rel_name": "leaning against",
+            "rel_name": "hanging on",
             "class_name_2": "class 7"
         },
         {
             "class_name_1": "class 0",
-            "rel_name": "leaning against",
+            "rel_name": "hanging on",
             "class_name_2": "class 8"
         },
         {
             "class_name_1": "class 0",
-            "rel_name": "leaning against",
+            "rel_name": "hanging on",
             "class_name_2": "class 9"
         },
         {
             "class_name_1": "class 0",
-            "rel_name": "leaning against",
+            "rel_name": "hanging on",
             "class_name_2": "class 10"
         },
         {
             "class_name_1": "class 0",
-            "rel_name": "leaning against",
+            "rel_name": "hanging on",
             "class_name_2": "class 11"
         },
         {
             "class_name_1": "class 1",
-            "rel_name": "leaning against",
+            "rel_name": "belonging to",
             "class_name_2": "class 0"
         },
         {
             "class_name_1": "class 1",
-            "rel_name": "leaning against",
+            "rel_name": "close by",
             "class_name_2": "class 2"
         },
         {
             "class_name_1": "class 1",
-            "rel_name": "leaning against",
+            "rel_name": "close by",
             "class_name_2": "class 3"
         },
         {
             "class_name_1": "class 1",
-            "rel_name": "leaning against",
+            "rel_name": "left",
             "class_name_2": "class 4"
         },
         {
             "class_name_1": "class 1",
-            "rel_name": "leaning against",
+            "rel_name": "hanging on",
             "class_name_2": "class 5"
         },
         {
             "class_name_1": "class 1",
-            "rel_name": "leaning against",
+            "rel_name": "hanging on",
             "class_name_2": "class 6"
         },
         {
             "class_name_1": "class 1",
-            "rel_name": "leaning against",
+            "rel_name": "hanging in",
             "class_name_2": "class 7"
         },
         {
             "class_name_1": "class 1",
-            "rel_name": "leaning against",
+            "rel_name": "inside",
             "class_name_2": "class 8"
         },
         {
             "class_name_1": "class 1",
-            "rel_name": "leaning against",
+            "rel_name": "inside",
             "class_name_2": "class 9"
         },
         {
             "class_name_1": "class 1",
-            "rel_name": "leaning against",
+            "rel_name": "hanging on",
             "class_name_2": "class 10"
         },
         {
             "class_name_1": "class 1",
-            "rel_name": "leaning against",
+            "rel_name": "hanging on",
             "class_name_2": "class 11"
         },
         {
             "class_name_1": "class 2",
-            "rel_name": "leaning against",
+            "rel_name": "belonging to",
             "class_name_2": "class 0"
         },
         {
             "class_name_1": "class 2",
-            "rel_name": "leaning against",
+            "rel_name": "close by",
             "class_name_2": "class 1"
         },
         {
             "class_name_1": "class 2",
-            "rel_name": "leaning against",
+            "rel_name": "close by",
             "class_name_2": "class 3"
         },
         {
             "class_name_1": "class 2",
-            "rel_name": "leaning against",
+            "rel_name": "left",
             "class_name_2": "class 4"
         },
         {
             "class_name_1": "class 2",
-            "rel_name": "leaning against",
+            "rel_name": "hanging on",
             "class_name_2": "class 5"
         },
         {
             "class_name_1": "class 2",
-            "rel_name": "leaning against",
+            "rel_name": "hanging on",
             "class_name_2": "class 6"
         },
         {
             "class_name_1": "class 2",
-            "rel_name": "leaning against",
+            "rel_name": "hanging in",
             "class_name_2": "class 7"
         },
         {
             "class_name_1": "class 2",
-            "rel_name": "leaning against",
+            "rel_name": "hanging on",
             "class_name_2": "class 8"
         },
         {
             "class_name_1": "class 2",
-            "rel_name": "leaning against",
+            "rel_name": "hanging in",
             "class_name_2": "class 9"
         },
         {
             "class_name_1": "class 2",
-            "rel_name": "leaning against",
+            "rel_name": "hanging on",
             "class_name_2": "class 10"
         },
         {
             "class_name_1": "class 2",
-            "rel_name": "leaning against",
+            "rel_name": "hanging on",
             "class_name_2": "class 11"
         },
         {
             "class_name_1": "class 3",
-            "rel_name": "leaning against",
+            "rel_name": "belonging to",
             "class_name_2": "class 0"
         },
         {
             "class_name_1": "class 3",
-            "rel_name": "leaning against",
+            "rel_name": "close by",
             "class_name_2": "class 1"
         },
         {
             "class_name_1": "class 3",
-            "rel_name": "leaning against",
+            "rel_name": "close by",
             "class_name_2": "class 2"
         },
         {
             "class_name_1": "class 3",
-            "rel_name": "leaning against",
+            "rel_name": "left",
             "class_name_2": "class 4"
         },
         {
             "class_name_1": "class 3",
-            "rel_name": "leaning against",
+            "rel_name": "hanging on",
             "class_name_2": "class 5"
         },
         {
             "class_name_1": "class 3",
-            "rel_name": "leaning against",
+            "rel_name": "hanging on",
             "class_name_2": "class 6"
         },
         {
             "class_name_1": "class 3",
-            "rel_name": "leaning against",
+            "rel_name": "hanging in",
             "class_name_2": "class 7"
         },
         {
             "class_name_1": "class 3",
-            "rel_name": "leaning against",
+            "rel_name": "hanging on",
             "class_name_2": "class 8"
         },
         {
             "class_name_1": "class 3",
-            "rel_name": "leaning against",
+            "rel_name": "hanging in",
             "class_name_2": "class 9"
         },
         {
             "class_name_1": "class 3",
-            "rel_name": "leaning against",
+            "rel_name": "hanging on",
             "class_name_2": "class 10"
         },
         {
             "class_name_1": "class 3",
-            "rel_name": "leaning against",
+            "rel_name": "hanging on",
             "class_name_2": "class 11"
         },
         {
             "class_name_1": "class 4",
-            "rel_name": "leaning against",
+            "rel_name": "close by",
             "class_name_2": "class 0"
         },
         {
             "class_name_1": "class 4",
-            "rel_name": "leaning against",
+            "rel_name": "close by",
             "class_name_2": "class 1"
         },
         {
             "class_name_1": "class 4",
-            "rel_name": "leaning against",
+            "rel_name": "close by",
             "class_name_2": "class 2"
         },
         {
             "class_name_1": "class 4",
-            "rel_name": "leaning against",
+            "rel_name": "close by",
             "class_name_2": "class 3"
         },
         {
             "class_name_1": "class 4",
-            "rel_name": "leaning against",
+            "rel_name": "bigger than",
             "class_name_2": "class 5"
         },
         {
             "class_name_1": "class 4",
-            "rel_name": "leaning against",
+            "rel_name": "bigger than",
             "class_name_2": "class 6"
         },
         {
             "class_name_1": "class 4",
-            "rel_name": "leaning against",
+            "rel_name": "hanging in",
             "class_name_2": "class 7"
         },
         {
@@ -262,92 +262,92 @@
         },
         {
             "class_name_1": "class 4",
-            "rel_name": "leaning against",
+            "rel_name": "same as",
             "class_name_2": "class 9"
         },
         {
             "class_name_1": "class 4",
-            "rel_name": "leaning against",
+            "rel_name": "belonging to",
             "class_name_2": "class 10"
         },
         {
             "class_name_1": "class 4",
-            "rel_name": "leaning against",
+            "rel_name": "belonging to",
             "class_name_2": "class 11"
         },
         {
             "class_name_1": "class 5",
-            "rel_name": "leaning against",
+            "rel_name": "hanging in",
             "class_name_2": "class 0"
         },
         {
             "class_name_1": "class 5",
-            "rel_name": "leaning against",
+            "rel_name": "hanging in",
             "class_name_2": "class 1"
         },
         {
             "class_name_1": "class 5",
-            "rel_name": "leaning against",
+            "rel_name": "hanging in",
             "class_name_2": "class 2"
         },
         {
             "class_name_1": "class 5",
-            "rel_name": "leaning against",
+            "rel_name": "hanging in",
             "class_name_2": "class 3"
         },
         {
             "class_name_1": "class 5",
-            "rel_name": "leaning against",
+            "rel_name": "front",
             "class_name_2": "class 4"
         },
         {
             "class_name_1": "class 5",
-            "rel_name": "leaning against",
+            "rel_name": "close by",
             "class_name_2": "class 6"
         },
         {
             "class_name_1": "class 5",
-            "rel_name": "leaning against",
+            "rel_name": "belonging to",
             "class_name_2": "class 7"
         },
         {
             "class_name_1": "class 5",
-            "rel_name": "leaning against",
+            "rel_name": "left",
             "class_name_2": "class 8"
         },
         {
             "class_name_1": "class 5",
-            "rel_name": "leaning against",
+            "rel_name": "close by",
             "class_name_2": "class 9"
         },
         {
             "class_name_1": "class 5",
-            "rel_name": "leaning against",
+            "rel_name": "bigger than",
             "class_name_2": "class 10"
         },
         {
             "class_name_1": "class 5",
-            "rel_name": "leaning against",
+            "rel_name": "behind",
             "class_name_2": "class 11"
         },
         {
             "class_name_1": "class 6",
-            "rel_name": "leaning against",
+            "rel_name": "hanging in",
             "class_name_2": "class 0"
         },
         {
             "class_name_1": "class 6",
-            "rel_name": "leaning against",
+            "rel_name": "hanging in",
             "class_name_2": "class 1"
         },
         {
             "class_name_1": "class 6",
-            "rel_name": "leaning against",
+            "rel_name": "hanging in",
             "class_name_2": "class 2"
         },
         {
             "class_name_1": "class 6",
-            "rel_name": "leaning against",
+            "rel_name": "hanging in",
             "class_name_2": "class 3"
         },
         {
@@ -357,22 +357,22 @@
         },
         {
             "class_name_1": "class 6",
-            "rel_name": "leaning against",
+            "rel_name": "behind",
             "class_name_2": "class 5"
         },
         {
             "class_name_1": "class 6",
-            "rel_name": "leaning against",
+            "rel_name": "belonging to",
             "class_name_2": "class 7"
         },
         {
             "class_name_1": "class 6",
-            "rel_name": "leaning against",
+            "rel_name": "left",
             "class_name_2": "class 8"
         },
         {
             "class_name_1": "class 6",
-            "rel_name": "leaning against",
+            "rel_name": "bigger than",
             "class_name_2": "class 9"
         },
         {
@@ -382,52 +382,52 @@
         },
         {
             "class_name_1": "class 6",
-            "rel_name": "leaning against",
+            "rel_name": "behind",
             "class_name_2": "class 11"
         },
         {
             "class_name_1": "class 7",
-            "rel_name": "leaning against",
+            "rel_name": "hanging in",
             "class_name_2": "class 0"
         },
         {
             "class_name_1": "class 7",
-            "rel_name": "leaning against",
+            "rel_name": "hanging on",
             "class_name_2": "class 1"
         },
         {
             "class_name_1": "class 7",
-            "rel_name": "leaning against",
+            "rel_name": "hanging on",
             "class_name_2": "class 2"
         },
         {
             "class_name_1": "class 7",
-            "rel_name": "leaning against",
+            "rel_name": "hanging on",
             "class_name_2": "class 3"
         },
         {
             "class_name_1": "class 7",
-            "rel_name": "leaning against",
+            "rel_name": "front",
             "class_name_2": "class 4"
         },
         {
             "class_name_1": "class 7",
-            "rel_name": "leaning against",
+            "rel_name": "behind",
             "class_name_2": "class 5"
         },
         {
             "class_name_1": "class 7",
-            "rel_name": "leaning against",
+            "rel_name": "behind",
             "class_name_2": "class 6"
         },
         {
             "class_name_1": "class 7",
-            "rel_name": "leaning against",
+            "rel_name": "left",
             "class_name_2": "class 8"
         },
         {
             "class_name_1": "class 7",
-            "rel_name": "leaning against",
+            "rel_name": "behind",
             "class_name_2": "class 9"
         },
         {
@@ -437,27 +437,27 @@
         },
         {
             "class_name_1": "class 7",
-            "rel_name": "leaning against",
+            "rel_name": "behind",
             "class_name_2": "class 11"
         },
         {
             "class_name_1": "class 8",
-            "rel_name": "leaning against",
+            "rel_name": "hanging in",
             "class_name_2": "class 0"
         },
         {
             "class_name_1": "class 8",
-            "rel_name": "leaning against",
+            "rel_name": "hanging in",
             "class_name_2": "class 1"
         },
         {
             "class_name_1": "class 8",
-            "rel_name": "leaning against",
+            "rel_name": "hanging in",
             "class_name_2": "class 2"
         },
         {
             "class_name_1": "class 8",
-            "rel_name": "leaning against",
+            "rel_name": "hanging in",
             "class_name_2": "class 3"
         },
         {
@@ -467,22 +467,22 @@
         },
         {
             "class_name_1": "class 8",
-            "rel_name": "leaning against",
+            "rel_name": "close by",
             "class_name_2": "class 5"
         },
         {
             "class_name_1": "class 8",
-            "rel_name": "leaning against",
+            "rel_name": "close by",
             "class_name_2": "class 6"
         },
         {
             "class_name_1": "class 8",
-            "rel_name": "leaning against",
+            "rel_name": "close by",
             "class_name_2": "class 7"
         },
         {
             "class_name_1": "class 8",
-            "rel_name": "leaning against",
+            "rel_name": "close by",
             "class_name_2": "class 9"
         },
         {
@@ -492,82 +492,82 @@
         },
         {
             "class_name_1": "class 8",
-            "rel_name": "leaning against",
+            "rel_name": "behind",
             "class_name_2": "class 11"
         },
         {
             "class_name_1": "class 9",
-            "rel_name": "leaning against",
+            "rel_name": "hanging in",
             "class_name_2": "class 0"
         },
         {
             "class_name_1": "class 9",
-            "rel_name": "leaning against",
+            "rel_name": "hanging on",
             "class_name_2": "class 1"
         },
         {
             "class_name_1": "class 9",
-            "rel_name": "leaning against",
+            "rel_name": "hanging in",
             "class_name_2": "class 2"
         },
         {
             "class_name_1": "class 9",
-            "rel_name": "leaning against",
+            "rel_name": "hanging in",
             "class_name_2": "class 3"
         },
         {
             "class_name_1": "class 9",
-            "rel_name": "leaning against",
+            "rel_name": "front",
             "class_name_2": "class 4"
         },
         {
             "class_name_1": "class 9",
-            "rel_name": "leaning against",
+            "rel_name": "close by",
             "class_name_2": "class 5"
         },
         {
             "class_name_1": "class 9",
-            "rel_name": "leaning against",
+            "rel_name": "build in",
             "class_name_2": "class 6"
         },
         {
             "class_name_1": "class 9",
-            "rel_name": "leaning against",
+            "rel_name": "belonging to",
             "class_name_2": "class 7"
         },
         {
             "class_name_1": "class 9",
-            "rel_name": "leaning against",
+            "rel_name": "left",
             "class_name_2": "class 8"
         },
         {
             "class_name_1": "class 9",
-            "rel_name": "leaning against",
+            "rel_name": "left",
             "class_name_2": "class 10"
         },
         {
             "class_name_1": "class 9",
-            "rel_name": "leaning against",
+            "rel_name": "behind",
             "class_name_2": "class 11"
         },
         {
             "class_name_1": "class 10",
-            "rel_name": "leaning against",
+            "rel_name": "cover",
             "class_name_2": "class 0"
         },
         {
             "class_name_1": "class 10",
-            "rel_name": "leaning against",
+            "rel_name": "cover",
             "class_name_2": "class 1"
         },
         {
             "class_name_1": "class 10",
-            "rel_name": "leaning against",
+            "rel_name": "hanging in",
             "class_name_2": "class 2"
         },
         {
             "class_name_1": "class 10",
-            "rel_name": "leaning against",
+            "rel_name": "hanging in",
             "class_name_2": "class 3"
         },
         {
@@ -577,87 +577,87 @@
         },
         {
             "class_name_1": "class 10",
-            "rel_name": "leaning against",
+            "rel_name": "belonging to",
             "class_name_2": "class 5"
         },
         {
             "class_name_1": "class 10",
-            "rel_name": "leaning against",
+            "rel_name": "belonging to",
             "class_name_2": "class 6"
         },
         {
             "class_name_1": "class 10",
-            "rel_name": "leaning against",
+            "rel_name": "close by",
             "class_name_2": "class 7"
         },
         {
             "class_name_1": "class 10",
-            "rel_name": "leaning against",
+            "rel_name": "close by",
             "class_name_2": "class 8"
         },
         {
             "class_name_1": "class 10",
-            "rel_name": "leaning against",
+            "rel_name": "belonging to",
             "class_name_2": "class 9"
         },
         {
             "class_name_1": "class 10",
-            "rel_name": "leaning against",
+            "rel_name": "close by",
             "class_name_2": "class 11"
         },
         {
             "class_name_1": "class 11",
-            "rel_name": "leaning against",
+            "rel_name": "behind",
             "class_name_2": "class 0"
         },
         {
             "class_name_1": "class 11",
-            "rel_name": "leaning against",
+            "rel_name": "cover",
             "class_name_2": "class 1"
         },
         {
             "class_name_1": "class 11",
-            "rel_name": "leaning against",
+            "rel_name": "behind",
             "class_name_2": "class 2"
         },
         {
             "class_name_1": "class 11",
-            "rel_name": "leaning against",
+            "rel_name": "behind",
             "class_name_2": "class 3"
         },
         {
             "class_name_1": "class 11",
-            "rel_name": "leaning against",
+            "rel_name": "behind",
             "class_name_2": "class 4"
         },
         {
             "class_name_1": "class 11",
-            "rel_name": "leaning against",
+            "rel_name": "belonging to",
             "class_name_2": "class 5"
         },
         {
             "class_name_1": "class 11",
-            "rel_name": "leaning against",
+            "rel_name": "belonging to",
             "class_name_2": "class 6"
         },
         {
             "class_name_1": "class 11",
-            "rel_name": "leaning against",
+            "rel_name": "belonging to",
             "class_name_2": "class 7"
         },
         {
             "class_name_1": "class 11",
-            "rel_name": "leaning against",
+            "rel_name": "belonging to",
             "class_name_2": "class 8"
         },
         {
             "class_name_1": "class 11",
-            "rel_name": "leaning against",
+            "rel_name": "belonging to",
             "class_name_2": "class 9"
         },
         {
             "class_name_1": "class 11",
-            "rel_name": "leaning against",
+            "rel_name": "close by",
             "class_name_2": "class 10"
         }
     ]

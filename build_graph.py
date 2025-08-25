@@ -23,6 +23,7 @@ from src.utils import op_utils
 from itertools import product
 import open3d as o3d
 from collections import Counter
+import random
 
 # --- Helper functions required by the BBQ Heuristic ---
 def egoview_project(target, anchor, center):
@@ -134,7 +135,6 @@ class VLSAT_Predictor:
         Initializes the VL-SAT model by loading the trained checkpoint.
         """
         print(f"Loading VL-SAT model from {model_path}...")
-        self.device = torch.device(device if torch.cuda.is_available() else "cpu")
         
         # --- This logic is ported from vl_sat_inference.py ---
         self.config = Config(config_path)
@@ -143,22 +143,27 @@ class VLSAT_Predictor:
         self.padding = 0.2
         self.model = MMGNet(self.config)
         
+        # set device and move model there
         if torch.cuda.is_available() and len(self.config.GPU) > 0:
             self.config.DEVICE = torch.device("cuda")
         else:
             self.config.DEVICE = torch.device("cpu")
+            
         self.model.load(best=True)
+        
+        # IMPORTANT: move the model to device AFTER loading weights
+        try:
+            self.model.model.to(self.config.DEVICE)
+        except Exception as e:
+            print("Warning: failed to move model to device:", e)
+            
         self.model.model.eval()
         
-        # Load the list of possible relationship names
+        # Load relationship names and check the file start
         with open(rel_list_path, "r") as f:
-            self.relationships_list = f.readlines()
-        
-        self.rel_id_to_rel_name = {
-            i: name.strip()
-            for i, name in enumerate(self.relationships_list[1:])
-        }
-        print(f"VL-SAT Predictor initialized for device '{self.device}'.")
+            self.relationships_list = [line.strip() for line in f.readlines() if line.strip()!='']
+
+        self.rel_id_to_rel_name = {i: name for i, name in enumerate(self.relationships_list)}
     
     def _bbox_center_from_bbox_np(self, bbox_np):
         """
@@ -172,8 +177,7 @@ class VLSAT_Predictor:
         mean = torch.mean(point, dim=0)
         point -= mean.unsqueeze(0)
         return point
-    
-    def _preprocess_objects(self, bbq_objects):
+    def _preprocess_objects2(self, bbq_objects):
         """
         Converts a list of BBQ objects into the tensor format required by the VL-SAT model.
         """
@@ -185,7 +189,34 @@ class VLSAT_Predictor:
             pcds[obj_id] = {}
             pcd_o3d = o3d.geometry.PointCloud()
             pcd_o3d.points = o3d.utility.Vector3dVector(obj['pcd_np'])
-            # print(f"Type: {'*'*30} {type(pcd_o3d)}")
+            
+            # Denoise the point cloud
+            pointcloud_ = pcd_denoise_dbscan(pcd_o3d)
+            
+            # Get the actual points from the denoised point cloud
+            pcd_array = np.asarray(pointcloud_.points)
+            
+            # Store the actual point cloud data. This is the crucial fix.
+            pcds[obj_id]['point_cloud'] = pcd_array
+            
+            # Store the position (center of the bounding box) for sanity checks if needed
+            # This part of the original code was correct in its intent, so it's preserved.
+            center = self._bbox_center_from_bbox_np(obj['bbox_np'])
+            pcds[obj_id]['position'] = center.tolist()
+            
+        return pcds
+
+    def _preprocess_objects(self, bbq_objects):
+        """
+        Converts a list of BBQ objects into the tensor format required by the VL-SAT model.
+        """
+        num_objects = len(bbq_objects)
+
+        pcds = {}
+        for obj_id, obj in enumerate(bbq_objects):
+            pcds[obj_id] = {}
+            pcd_o3d = o3d.geometry.PointCloud()
+            pcd_o3d.points = o3d.utility.Vector3dVector(obj['pcd_np'])
             pointcloud_ = pcd_denoise_dbscan(pcd_o3d)
             
             # TO-DO: Add pose information if available
@@ -207,11 +238,6 @@ class VLSAT_Predictor:
             z = np.linspace(pose[2] - size[2]/2, pose[2] + size[2]/2, nz)
             xv, yv, zv = np.meshgrid(x, y, z)
             
-            # print(x.shape, y.shape, z.shape)
-            # print(xv)
-            # print(xv.shape, yv.shape, zv.shape)
-            #print(xv.flatten())
-            
             grid_pc = np.stack((xv.flatten(), yv.flatten(), zv.flatten()), axis=1)
             pcds[obj_id]['point_cloud'] = grid_pc
             
@@ -224,14 +250,6 @@ class VLSAT_Predictor:
 
     def preprocess_poinclouds(self, points, num_points):
         assert len(points) > 1, "Number of objects should be at least 2"
-        print(num_points, "num_points")
-        
-        # print("points shape:", [p.shape for p in points])
-        # print("points length:", len(points))
-        # print("points[0] shape:", points[0].shape)
-        # print("points[0] first 5 points:", points[0][:5])
-        # print("points[-1] first 5 points:", points[-1][:5])
-        
         edge_indices = list(product(list(range(len(points))), list(range(len(points)))))
         edge_indices = [i for i in edge_indices if i[0]!=i[1]]
 
@@ -239,7 +257,6 @@ class VLSAT_Predictor:
         dim_point = points[0].shape[-1]
 
         instances_box = dict()
-        print("num_objects:", num_objects, "dim_point:", dim_point, "num_points:", num_points)
         
         obj_points = torch.zeros([num_objects, num_points, dim_point])
         descriptor = torch.zeros([num_objects, 11])
@@ -254,7 +271,6 @@ class VLSAT_Predictor:
             instances_box[i] = (min_box, max_box)
             
             choice = np.random.choice(len(pcd), num_points, replace=True)
-            print(f"choice shape: {choice.shape}, choice first 5: {choice[:5]}")
 
             pcd = pcd[choice, :]
             descriptor[i] = op_utils.gen_descriptor(torch.from_numpy(pcd))
@@ -270,18 +286,11 @@ class VLSAT_Predictor:
         return obj_points, obj_2d_feats, edge_indices, descriptor, batch_ids
     
     def predict_relations(self, obj_points, obj_2d_feats, edge_indices, descriptor, batch_ids):
-        print("obj_points shape:", obj_points.shape, "obj_points:", obj_points[-1, :, 0:5])
         obj_points = obj_points.to(self.config.DEVICE)
         obj_2d_feats = obj_2d_feats.to(self.config.DEVICE)
         edge_indices = edge_indices.to(self.config.DEVICE)
         descriptor = descriptor.to(self.config.DEVICE)
         batch_ids = batch_ids.to(self.config.DEVICE)
-        
-        # print("obj_points shape:", obj_points.shape, "obj_points:", obj_points[-1, :, 0:5])
-        # print("obj_2d_feats shape:", obj_2d_feats.shape, "obj_2d_feats:", obj_2d_feats[0])
-        # print("edge_indices shape:", edge_indices.shape, "edge_indices:", edge_indices[0])
-        # print("descriptor shape:", descriptor.shape, "descriptor0:", descriptor[0])
-        # print("batch_ids shape:", batch_ids.shape, "batch_ids:", batch_ids)
         
         with torch.no_grad():
             rel_cls_3d = self.model.model(
@@ -334,11 +343,9 @@ class VLSAT_Predictor:
             return []
             
         # 1. Preprocess the nodes into point clouds and other required formats
-        preprocessed_data = self._preprocess_objects(nodes)
+        preprocessed_data = self._preprocess_objects2(nodes)
         pcds_list = [_pcd['point_cloud'] for _pcd in preprocessed_data.values()]
         
-        print(f"pcds_list len: {len(pcds_list)}, {type(pcds_list[0])}")
-        print(f"pcds_list shapes: {[_pcd.shape for _pcd in pcds_list]}")
         
         # 2. Preprocess the point clouds for the model
         obj_points, obj_2d_feats, edge_indices, descriptor, batch_ids = self.preprocess_poinclouds(
@@ -552,10 +559,11 @@ def build_graph(input_nodes_path, predictor_type):
     
     # --- INITIALIZE PREDICTOR (This part remains the same) ---
     if predictor_type == 'vlsat':
+        # Pass the absolute paths to the VLSAT_Predictor
         predictor = VLSAT_Predictor(
-            model_path="./3dssg_best_ckpt",
-            config_path="./config/mmgnet.json",
-            rel_list_path="./config/relationships.txt"
+            model_path="/home/rizo/mipt_ccm/bbq_fork//3dssg_best_ckpt",
+            config_path="config/mmgnet.json",
+            rel_list_path="/home/rizo/mipt_ccm/bbq_fork/config/relations.txt"
         )
     elif predictor_type == 'sceneverse':
         predictor = SceneVerse_Predictor()
@@ -588,7 +596,7 @@ if __name__ == "__main__":
     )
     
     args = parser.parse_args()
-    input_file = "/home/docker_user/BeyondBareQueries/output/frame_last_objects.pkl.gz"
+    input_file = "/home/rizo/mipt_ccm/warehouse/code_pack/BeyondBareQueries/output/frame_last_objects.pkl.gz"
     
     build_graph(
         input_nodes_path=input_file,
