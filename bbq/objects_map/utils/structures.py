@@ -140,6 +140,11 @@ class MapObjectList(DetectionList):
                 s_obj_dict['descriptor'] = to_numpy(s_obj_dict['descriptor'])
             except:
                 logger.warning("can't load descriptor")
+                
+            try:
+                s_obj_dict['clip_descriptor'] = to_numpy(s_obj_dict['clip_descriptor'])
+            except:
+                logger.warning("can't load clip_descriptor")
 
             try:
                 s_obj_dict['id'] = list(s_obj_dict['id'])
@@ -169,6 +174,11 @@ class MapObjectList(DetectionList):
                 new_obj['descriptor'] = to_tensor(new_obj['descriptor'])
             except:
                 logger.warning("can't load descriptor")
+
+            try:
+                new_obj['clip_descriptor'] = to_tensor(new_obj['clip_descriptor'])
+            except:
+                logger.warning("can't load clip_descriptor")
 
             try:
                 new_obj['id'] = set(new_obj['id'])

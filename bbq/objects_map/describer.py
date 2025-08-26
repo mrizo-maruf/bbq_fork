@@ -6,8 +6,26 @@ from PIL import Image
 from tqdm import tqdm
 from loguru import logger
 from bbq.models import LLaVaChat
+from transformers import CLIPProcessor, CLIPModel
 
+class CLIPImageEncoder:
+    def __init__(self, clip_model_name="openai/clip-vit-base-patch32"):
+        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        logger.info(f"Loading CLIP model '{clip_model_name}' on device '{self.device}'")
+        self.model = CLIPModel.from_pretrained(clip_model_name).to(self.device)
+        self.processor = CLIPProcessor.from_pretrained(clip_model_name)
 
+    def get_embedding(self, image: Image.Image) -> np.ndarray:
+        """
+        Computes the CLIP image embedding for a single PIL Image.
+        """
+        inputs = self.processor(images=image, return_tensors="pt").to(self.device)
+        with torch.no_grad():
+            embedding = self.model.get_image_features(**inputs)
+        # L2 normalize the embedding and return as a numpy array
+        embedding = embedding / embedding.norm(p=2, dim=-1, keepdim=True)
+        return embedding.cpu().numpy().squeeze()
+    
 def get_xyxy_from_mask(mask):
     non_zero_indices = np.nonzero(mask)
 
@@ -49,6 +67,10 @@ def describe_objects(objects, colors, save_path="output/crops"):
     chat = LLaVaChat()
     logger.info("LLaVA chat is initialized.")
 
+    # 3. Instantiate the new CLIP image encoder
+    clip_encoder = CLIPImageEncoder()
+    logger.info("CLIP image encoder is initialized.")
+    
     if save_path:
         os.makedirs(save_path, exist_ok=True)
         logger.info(f"Saving crops and descriptions to: {save_path}")
@@ -68,12 +90,18 @@ def describe_objects(objects, colors, save_path="output/crops"):
         template["id"] = idx
         template["bbox_extent"] = [round(i, 1) for i in list(bbox.get_extent())]
         template["bbox_center"] = [round(i, 1) for i in list(bbox.get_center())]
-
+        
         ### caption
         image = Image.open(colors[object_["color_image_idx"]]).convert("RGB")
         mask = object_["mask"]
         image = image.resize((mask.shape[1], mask.shape[0]), Image.LANCZOS)
         image_crop = crop_image(image, mask)
+        
+        # 4. Generate the CLIP embedding and add it to the template
+        clip_descriptor = clip_encoder.get_embedding(image_crop)
+        template["clip_descriptor"] = clip_descriptor
+
+
         image_features = [image_crop]
         image_sizes = [image.size for image in image_features]
         image_features = chat.preprocess_image(image_features)
@@ -98,21 +126,17 @@ def describe_objects(objects, colors, save_path="output/crops"):
             img_filename = f"object_{idx}_crop.png"
             image_crop.save(os.path.join(save_path, img_filename))
             
-        # v-- MODIFIED THIS PART
         # Instead of saving a new file, add the formatted description to our list
         formatted_description = f"Object {idx}: {template['description']}"
         all_descriptions.append(formatted_description)
-        # ^-- END OF MODIFICATION
-
         result.append(template)
 
-    # v-- ADDED THIS BLOCK to write the single summary file after the loop is done
+    # to write the single summary file after the loop is done
     if save_path:
         summary_filename = "llava_descriptions.txt"
         summary_text = "\n".join(all_descriptions)
         
         with open(os.path.join(save_path, summary_filename), 'w') as f:
             f.write(summary_text)
-    # ^-- END OF ADDED BLOCK
 
     return result
