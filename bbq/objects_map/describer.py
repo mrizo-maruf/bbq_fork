@@ -100,6 +100,7 @@ def describe_objects(objects, colors, save_path="output/crops"):
         # 4. Generate the CLIP embedding and add it to the template
         clip_descriptor = clip_encoder.get_embedding(image_crop)
         template["clip_descriptor"] = clip_descriptor
+        # print(f"Generated CLIP descriptor: {len(clip_descriptor)}")
 
 
         image_features = [image_crop]

@@ -71,4 +71,17 @@ class NodesConstructor:
         )
 
     def describe(self, colors):
-        return describe_objects(self.objects, colors)
+        templates = describe_objects(self.objects, colors)
+        
+        for temp, obj in zip(templates, self.objects):
+            obj["clip_descriptor"] = temp["clip_descriptor"]
+            obj["bbox_extent"] = temp["bbox_extent"]
+            obj["bbox_center"] = temp["bbox_extent"]
+            # if obj['id'] == temp['id']:
+            # else:
+            #     print(f"IDs did not match, obj id: {obj['id']}, temp id: {temp['id']}")
+            del temp["clip_descriptor"]
+        # print(f"objects: {list(self.objects[0].keys())}")
+        # print(f"template: {list(templates[0].keys())}")
+        
+        return templates

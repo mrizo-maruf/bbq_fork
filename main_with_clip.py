@@ -23,6 +23,8 @@ logging.config.dictConfig({
     'disable_existing_loggers': True,
 })
 
+from build_graph import VLSAT_Predictor
+
 
 class TqdmLoggingHandler:
     def __init__(self, level="INFO"):
@@ -99,6 +101,7 @@ def main(args):
             pickle.dump(results, file)
 
     logger.info('Saving graph nodes in json file.')
+    # print(f"0 template: {list(nodes[0].keys())}")
     os.makedirs(config["nodes_constructor"]["output_path"], exist_ok=True)
     with open(os.path.join(
         config["nodes_constructor"]["output_path"],
@@ -106,6 +109,20 @@ def main(args):
         'w') as f:
             json.dump(nodes, f)
 
+    # Section for edge prediction
+    logger.info('='*10, 'Predicting Edges', '='*10)
+    logger.info("Predicting VL-SAT based edges")
+    
+    # predictor_vl_sat = VLSAT_Predictor(
+    #     model_path="/home/rizo/mipt_ccm/bbq_fork//3dssg_best_ckpt",
+    #     config_path="config/mmgnet.json",
+    #     rel_list_path="/home/rizo/mipt_ccm/bbq_fork/config/relations.txt"
+    # )
+    
+    # edges = predictor_vl_sat.predict(nodes_constructor['objects'])
+    
+    
+    
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

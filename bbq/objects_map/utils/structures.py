@@ -142,9 +142,13 @@ class MapObjectList(DetectionList):
                 logger.warning("can't load descriptor")
                 
             try:
+                # print(obj.keys())
                 s_obj_dict['clip_descriptor'] = to_numpy(s_obj_dict['clip_descriptor'])
-            except:
-                logger.warning("can't load clip_descriptor")
+                # print(f"type: {type(s_obj_dict['clip_descriptor'])}")
+                # print(f"clip_descriptor shape: {s_obj_dict['clip_descriptor'].shape}")
+                # print(f"clip_descriptor: {s_obj_dict['clip_descriptor'][2]}")
+            except Exception as e:
+                logger.warning(f"""can't load clip_descriptor: {e}""")
 
             try:
                 s_obj_dict['id'] = list(s_obj_dict['id'])
@@ -184,7 +188,18 @@ class MapObjectList(DetectionList):
                 new_obj['id'] = set(new_obj['id'])
             except:
                 logger.warning("can't load id")
+                
+            try:
+                new_obj['bbox_extent'] = to_tensor(new_obj['bbox_extent'])
+            except Exception as e:
+                logger.warning(f"can't load new_obj['bbox_extent']: {e}")
 
+            try:
+                new_obj['bbox_center'] = to_tensor(new_obj['bbox_center'])
+            except Exception as e:
+                logger.warning(f"can't load new_obj['bbox_center']: {e}")
+
+            # why here being deleted?
             del new_obj['pcd_np']
             del new_obj['bbox_np']
             del new_obj['pcd_color_np']
