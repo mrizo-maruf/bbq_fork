@@ -27,8 +27,19 @@ Open-Vocabulary Object Grounding <br> with 3D Scene Graph</h1>
 </p>
 
 
-## BBQ with different edge predictors
+## reqs
+* Run them after starting container and installing LLava
+```
+pip install trimesh
+pip install shapely
+pip install pyvista
+```
 
+## BBQ with different edge predictors
+0. full bbq with vl sat edge prediction integrated
+```
+python main_with_edges.py
+```
 1. default bbq predictor, make sure to change the .json path of nodes in `build_graph`
 ```
 python build_graph.py --predictor bbq

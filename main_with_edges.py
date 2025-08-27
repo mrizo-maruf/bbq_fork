@@ -91,12 +91,45 @@ def main(args):
     )
     torch.cuda.empty_cache()
 
+    # logger.info('Saving objects.')
+    # os.makedirs(config["nodes_constructor"]["output_path"], exist_ok=True)
+    # results = {'objects': nodes_constructor.objects.to_serializable()}
+    # with gzip.open(os.path.join(
+    #     config["nodes_constructor"]["output_path"],
+    #     hash.strftime("%m.%d.%Y_%H:%M:%S_") + config["nodes_constructor"]["output_name_objects"]),
+    #     'wb') as file:
+    #         pickle.dump(results, file)
+
+    # logger.info('Saving graph nodes in json file.')
+    # # print(f"0 template: {list(nodes[0].keys())}")
+    # os.makedirs(config["nodes_constructor"]["output_path"], exist_ok=True)
+    # with open(os.path.join(
+    #     config["nodes_constructor"]["output_path"],
+    #     hash.strftime("%m.%d.%Y_%H:%M:%S_") + config["nodes_constructor"]["output_name_nodes"]),
+    #     'w') as f:
+    #         json.dump(nodes, f)
+
+    # # Section for edge prediction
+    # logger.info('='*10, 'Predicting Edges', '='*10)
+    # logger.info("Predicting VL-SAT based edges")
+    
+    predictor_vl_sat = VLSAT_Predictor(
+        model_path="/home/docker_user/BeyondBareQueries/3dssg_best_ckpt",
+        config_path="config/mmgnet.json",
+        rel_list_path="/home/docker_user/BeyondBareQueries/config/relations.txt"
+    )
+    
+    vl_sat_edges = predictor_vl_sat.predict(nodes_constructor.objects)
+    
+    nodes_constructor.add_edges_vl_sat(vl_sat_edges)
+    
+    
     logger.info('Saving objects.')
     os.makedirs(config["nodes_constructor"]["output_path"], exist_ok=True)
     results = {'objects': nodes_constructor.objects.to_serializable()}
     with gzip.open(os.path.join(
         config["nodes_constructor"]["output_path"],
-        hash.strftime("%m.%d.%Y_%H:%M:%S_") + config["nodes_constructor"]["output_name_objects"]),
+        hash.strftime("%m.%d.%Y_%H:%M:%S_edge") + config["nodes_constructor"]["output_name_objects"]),
         'wb') as file:
             pickle.dump(results, file)
 
@@ -105,30 +138,15 @@ def main(args):
     os.makedirs(config["nodes_constructor"]["output_path"], exist_ok=True)
     with open(os.path.join(
         config["nodes_constructor"]["output_path"],
-        hash.strftime("%m.%d.%Y_%H:%M:%S_") + config["nodes_constructor"]["output_name_nodes"]),
+        hash.strftime("%m.%d.%Y_%H:%M:%S_edge") + config["nodes_constructor"]["output_name_nodes"]),
         'w') as f:
             json.dump(nodes, f)
-
-    # Section for edge prediction
-    logger.info('='*10, 'Predicting Edges', '='*10)
-    logger.info("Predicting VL-SAT based edges")
-    
-    # predictor_vl_sat = VLSAT_Predictor(
-    #     model_path="/home/rizo/mipt_ccm/bbq_fork//3dssg_best_ckpt",
-    #     config_path="config/mmgnet.json",
-    #     rel_list_path="/home/rizo/mipt_ccm/bbq_fork/config/relations.txt"
-    # )
-    
-    # edges = predictor_vl_sat.predict(nodes_constructor['objects'])
-    
-    
-    
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="""Build 3D scene object map.
         For more information see Sec. 3.1 - 3.3.""")
-    parser.add_argument("--config_path", default=r"examples/configs/replica_room0.yaml",
+    parser.add_argument("--config_path", default=r"examples/configs/isaac/warehouse.yaml",
                         help="see example in default path")
     parser.add_argument("--logger_level", default="INFO")
     parser.add_argument("--save_path", default=None,

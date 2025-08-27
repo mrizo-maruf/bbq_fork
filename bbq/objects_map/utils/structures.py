@@ -126,6 +126,61 @@ class MapObjectList(DetectionList):
 
         similarities = F.cosine_similarity(new_features.unsqueeze(0), features)
         return similarities
+    import numpy as np
+
+    def bbox_center_and_extent(self, corners, oriented=True, half_extents=False):
+        """
+        corners: array-like of shape (8,3) OR flat shape (24,) OR a list of 8 (3,) points.
+        oriented: if True compute extents in the box's principal axes (PCA); 
+                if False compute axis-aligned extents (world axes).
+        half_extents: if True return extents/2 (common convention in some libraries).
+        Returns:
+        center: (3,) ndarray
+        extents: (3,) ndarray (full lengths unless half_extents=True)
+        axes: (3,3) ndarray of axes as columns (only returned if oriented=True)
+        """
+        arr = np.asarray(corners)
+        # Normalize shapes:
+        if arr.ndim == 1 and arr.size == 24:
+            arr = arr.reshape(8, 3)
+        elif arr.shape == (8,):
+            # allow list of 8 points, each a length-3 sequence
+            try:
+                arr = np.stack(arr)
+            except Exception as e:
+                raise ValueError("Input shape (8,) not stackable into (8,3).") from e
+
+        if arr.shape != (8, 3):
+            raise ValueError(f"Expected corners shape (8,3) or (24,), got {arr.shape}")
+
+        center = arr.mean(axis=0)  # (3,)
+
+        if not oriented:
+            mins = arr.min(axis=0)
+            maxs = arr.max(axis=0)
+            extents = maxs - mins
+            if half_extents:
+                extents = extents / 2.0
+            return center, extents
+
+        # oriented: find orthonormal axes via PCA (covariance of centered points)
+        pts = arr - center  # center the points
+        cov = pts.T @ pts   # 3x3 covariance-like matrix (unnormalized)
+        eigvals, eigvecs = np.linalg.eigh(cov)  # eigvecs columns correspond to eigenvalues
+        # sort eigenvectors by descending variance
+        order = np.argsort(eigvals)[::-1]
+        axes = eigvecs[:, order]  # 3x3, columns = principal axes
+
+        # project centered points into the PCA axes (local box coordinates)
+        projected = pts @ axes       # shape (8,3)
+        mins = projected.min(axis=0)
+        maxs = projected.max(axis=0)
+        extents = maxs - mins        # full lengths along each axis
+        if half_extents:
+            extents = extents / 2.0
+
+        return center, extents
+
 
     def to_serializable(self):
         s_obj_list = []
@@ -135,7 +190,10 @@ class MapObjectList(DetectionList):
             s_obj_dict['pcd_np'] = np.asarray(s_obj_dict['pcd'].points)
             s_obj_dict['bbox_np'] = np.asarray(s_obj_dict['bbox'].get_box_points())
             s_obj_dict['pcd_color_np'] = np.asarray(s_obj_dict['pcd'].colors)
-
+            s_obj_dict['bbox_center'] = np.asarray(s_obj_dict['bbox'].center)
+            s_obj_dict['bbox_extent'] = np.asarray(s_obj_dict['bbox'].extent)
+            s_obj_dict['bbox_rotation'] = np.asarray(s_obj_dict['bbox'].R)
+            
             try:
                 s_obj_dict['descriptor'] = to_numpy(s_obj_dict['descriptor'])
             except:

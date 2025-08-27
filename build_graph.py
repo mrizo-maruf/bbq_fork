@@ -183,13 +183,18 @@ class VLSAT_Predictor:
         """
         num_objects = len(bbq_objects)
         print(f"Num objects: {num_objects}")
+            
 
         pcds = {}
         for obj_id, obj in enumerate(bbq_objects):
             pcds[obj_id] = {}
             pcd_o3d = o3d.geometry.PointCloud()
-            pcd_o3d.points = o3d.utility.Vector3dVector(obj['pcd_np'])
             
+            # print(type(obj['pcd']))
+            # pcd_np = np.asarray(obj['pcd'])
+            # pcd_o3d.points = o3d.utility.Vector3dVector(pcd_np)
+            
+            pcd_o3d = obj['pcd']
             # Denoise the point cloud
             pointcloud_ = pcd_denoise_dbscan(pcd_o3d)
             
@@ -201,7 +206,8 @@ class VLSAT_Predictor:
             
             # Store the position (center of the bounding box) for sanity checks if needed
             # This part of the original code was correct in its intent, so it's preserved.
-            center = self._bbox_center_from_bbox_np(obj['bbox_np'])
+            # center = self._bbox_center_from_bbox_np(obj['bbox_np'])
+            center = obj['bbox'].center
             pcds[obj_id]['position'] = center.tolist()
             
         return pcds
@@ -317,14 +323,14 @@ class VLSAT_Predictor:
             rel_name = self.rel_id_to_rel_name[rel_id]
 
             rel_dict = {
-                #"id_1": id_1,
+                "id_1": id_1,
                 #"timestamp_1": timestamp_1,
                 "class_name_1": class_name_1,
                 "rel_name": rel_name,
-                #"id_2": id_2,
+                "id_2": id_2,
                 #"timestamp_2": timestamp_2,
                 "class_name_2": class_name_2,
-                #"rel_id": rel_id,
+                "rel_id": rel_id,
                 
             }
             saved_relations.append(rel_dict)
@@ -359,7 +365,7 @@ class VLSAT_Predictor:
         # print(topk_indices, topk_values)
         
         # 4. Save the relations in a standardized format
-        tracking_ids = [str(i) for i in range(len(pcds_list))]
+        tracking_ids = [i for i in range(len(pcds_list))]
         timestamps = ["001539" for i in range(len(pcds_list))]
         class_names = [f"class {i}" for i in range(len(pcds_list))]
         
@@ -562,7 +568,7 @@ def build_graph(input_nodes_path, predictor_type):
     if predictor_type == 'vlsat':
         # Pass the absolute paths to the VLSAT_Predictor
         predictor = VLSAT_Predictor(
-            model_path="/home/rizo/mipt_ccm/bbq_fork//3dssg_best_ckpt",
+            model_path="/home/docker_user/BeyondBareQueries/3dssg_best_ckpt",
             config_path="config/mmgnet.json",
             rel_list_path="/home/rizo/mipt_ccm/bbq_fork/config/relations.txt"
         )
@@ -597,7 +603,7 @@ if __name__ == "__main__":
     )
     
     args = parser.parse_args()
-    input_file = "/home/rizo/mipt_ccm/warehouse/code_pack/BeyondBareQueries/output/frame_last_objects.pkl.gz"
+    input_file = "/home/docker_user/BeyondBareQueries/output/scenes/08.27.2025_16:31:14_isaac_warehouse_objects.pkl.gz"
     
     build_graph(
         input_nodes_path=input_file,

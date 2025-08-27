@@ -75,8 +75,9 @@ class NodesConstructor:
         
         for temp, obj in zip(templates, self.objects):
             obj["clip_descriptor"] = temp["clip_descriptor"]
-            obj["bbox_extent"] = temp["bbox_extent"]
-            obj["bbox_center"] = temp["bbox_extent"]
+            obj["node_id"] = temp["id"]
+            # obj["bbox_extent"] = temp["bbox_extent"]
+            # obj["bbox_center"] = temp["bbox_extent"]
             # if obj['id'] == temp['id']:
             # else:
             #     print(f"IDs did not match, obj id: {obj['id']}, temp id: {temp['id']}")
@@ -85,3 +86,52 @@ class NodesConstructor:
         # print(f"template: {list(templates[0].keys())}")
         
         return templates
+    
+    def add_edges_vl_sat(self, predicted_edges):
+        """
+        Adds relational edges to each object (node) in the map.
+
+        Each object in self.objects will be updated with a new key 'edges',
+        which is a list of all relations it participates in (either as 
+        subject or object).
+
+        Args:
+            predicted_edges (list): A list of dictionaries, where each dictionary
+                                    represents a relational edge between two objects.
+                                    This is the output of your `save_relations` function.
+        """
+        # Step 1: Initialize an empty 'edges' list for every object.
+        # This ensures the key exists even for nodes with no connections.
+        for obj in self.objects:
+            obj['edges_vl_sat'] = []
+            
+        # Step 2: Create a mapping from node_id to the object dictionary.
+        # This is for efficient lookup (O(1) on average) and avoids slow,
+        # repetitive searching through the self.objects list in a loop.
+        try:
+            node_map = {obj['node_id']: obj for obj in self.objects}
+        except KeyError:
+            logger.error("Could not create node map. Make sure 'describe()' has been run and objects have 'node_id'.")
+            return
+
+        # Step 3: Iterate through each edge and add it to the relevant nodes.
+        for edge in predicted_edges:
+            subject_id = edge['id_1']
+            object_id = edge['id_2']
+            
+            # Find the corresponding node objects using our fast lookup map
+            subject_node = node_map.get(subject_id)
+            # object_node = node_map.get(object_id)
+
+            # Check if both nodes involved in the edge exist in our map
+            if subject_node:
+                # An edge is relevant to both nodes. Add the edge dictionary
+                # to the lists of both the subject and the object.
+                subject_node['edges_vl_sat'].append(edge)
+            else:
+                # Log a warning if a node mentioned in an edge wasn't found.
+                if not subject_node:
+                    logger.warning(f"Node with ID {subject_id} from an edge was not found in self.objects.")
+                    logger.warning(f"subject_id {type(subject_id)}, object node id: {type(self.objects[0]['node_id'])}")
+                    logger.warning(f"subject_id {subject_id}, object node id: {self.objects[0]['node_id']}")
+
