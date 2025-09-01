@@ -569,8 +569,23 @@ class SGGpoint(BaseModel):
         
         gcn_obj_feature_3d = self.obj_mlp_3d(torch.cat([obj_3d_feats_, gcn_obj_feature_3d.squeeze(0)], dim=-1))
         gcn_obj_feature_2d = self.obj_mlp_2d(torch.cat([obj_2d_feats_, gcn_obj_feature_2d.squeeze(0)], dim=-1))
+        
+        # get the per-edge vectors used by classifiers
+        edge_vecs_3d = gcn_edge_feature_3d.squeeze(0)   # shape: (num_edges, feat_dim)
+        edge_vecs_2d = gcn_edge_feature_2d.squeeze(0)   # shape: (num_edges, feat_dim)
+
+        # print dimension
+        print('before gcn_obj_feature_3d:', gcn_obj_feature_3d.shape)
+        print('before gcn_obj_feature_2d:', gcn_obj_feature_2d.shape)
+        print('edge_vecs_3d:', edge_vecs_3d.shape)
+        print('edge_vecs_2d:', edge_vecs_2d.shape)
+
         gcn_edge_feature_3d = self.rel_mlp_3d(torch.cat([rel_3d_feats_, gcn_edge_feature_3d.squeeze(0)], dim=-1))
         gcn_edge_feature_2d = self.rel_mlp_2d(torch.cat([rel_2d_feats_, gcn_edge_feature_2d.squeeze(0)], dim=-1))
+        
+        print('after gcn_obj_feature_3d:', gcn_obj_feature_3d.shape)
+        print('after gcn_obj_feature_2d:', gcn_obj_feature_2d.shape)
+        
         
         # Generate triplet features
         gcn_edge_feature_3d_dis = self.generate_object_pair_features(gcn_obj_feature_3d, gcn_edge_feature_3d, edge_indices)
@@ -589,7 +604,7 @@ class SGGpoint(BaseModel):
         if istrain:
             return obj_logits_3d, obj_logits_2d, rel_logits_3d, rel_logits_2d, obj_feature_3d_mimic, obj_features_2d_mimic, gcn_edge_feature_3d_dis, gcn_edge_feature_2d_dis, logit_scale
         else:
-            return obj_logits_3d, obj_logits_2d, rel_logits_3d, rel_logits_2d
+            return obj_logits_3d, obj_logits_2d, rel_logits_3d, rel_logits_2d, edge_vecs_3d, edge_vecs_2d
     
     def process_train(self, obj_points, obj_2d_feats, gt_cls, descriptor, gt_rel_cls, edge_indices, batch_ids=None, with_log=False, ignore_none_rel=False, weights_obj=None, weights_rel=None):
         self.iteration += 1 

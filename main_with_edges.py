@@ -119,9 +119,9 @@ def main(args):
         rel_list_path="/home/docker_user/BeyondBareQueries/config/relations.txt"
     )
     
-    vl_sat_edges = predictor_vl_sat.predict(nodes_constructor.objects)
+    vl_sat_edges, edge_feat_3d, edge_feat_2d = predictor_vl_sat.predict(nodes_constructor.objects)
     
-    nodes_constructor.add_edges_vl_sat(vl_sat_edges)
+    nodes_constructor.add_edges_vl_sat(vl_sat_edges, edge_feat_3d, edge_feat_2d)
     
     
     logger.info('Saving objects.')

@@ -87,7 +87,7 @@ class NodesConstructor:
         
         return templates
     
-    def add_edges_vl_sat(self, predicted_edges):
+    def add_edges_vl_sat(self, predicted_edges, edge_feat_3d, edge_feat_2d):
         """
         Adds relational edges to each object (node) in the map.
 
@@ -114,6 +114,7 @@ class NodesConstructor:
             logger.error("Could not create node map. Make sure 'describe()' has been run and objects have 'node_id'.")
             return
 
+        edge_counter = 0
         # Step 3: Iterate through each edge and add it to the relevant nodes.
         for edge in predicted_edges:
             subject_id = edge['id_1']
@@ -127,7 +128,10 @@ class NodesConstructor:
             if subject_node:
                 # An edge is relevant to both nodes. Add the edge dictionary
                 # to the lists of both the subject and the object.
+                edge['3d_feat'] = edge_feat_3d[edge_counter]
+                edge['2d_feat'] = edge_feat_2d[edge_counter]
                 subject_node['edges_vl_sat'].append(edge)
+                edge_counter = edge_counter + 1
             else:
                 # Log a warning if a node mentioned in an edge wasn't found.
                 if not subject_node:
@@ -135,3 +139,10 @@ class NodesConstructor:
                     logger.warning(f"subject_id {type(subject_id)}, object node id: {type(self.objects[0]['node_id'])}")
                     logger.warning(f"subject_id {subject_id}, object node id: {self.objects[0]['node_id']}")
 
+    # def add_edge_feat(self, edge_feat_3d, edge_feat_2d):
+    #     for node in self.objects:
+    #         node['edge_feat_3d'] = []
+    #         node['edge_feat_2d'] = []
+    #         for ef_3d, ef_2d in zip(edge_feat_3d, edge_feat_2d):
+    #             node['edge_feat_3d'].append(ef_3d)
+    #             node['edge_feat_2d'].append(ef_2d)

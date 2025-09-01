@@ -360,7 +360,7 @@ class VLSAT_Predictor:
         )
         
         # 3. Predict
-        predicted_relations = self.predict_relations(obj_points, obj_2d_feats, edge_indices, descriptor, batch_ids)
+        predicted_relations, edge_feat_3d, edge_feat_2d = self.predict_relations(obj_points, obj_2d_feats, edge_indices, descriptor, batch_ids)
         topk_values, topk_indices = torch.topk(predicted_relations, 5, dim=1,  largest=True)
         # print(topk_indices, topk_values)
         
@@ -375,30 +375,13 @@ class VLSAT_Predictor:
             json.dump(saved_relations, f, indent=4)
 
         print("Saved to output/scenegraphs/saved_relations.json")
-        
-        if isinstance(predicted_relations, tuple):
-            # common layout: (obj_logits_3d, obj_logits_2d, rel_logits_3d, rel_logits_2d, ..., edge_vecs_3d, edge_vecs_2d)
-            rel_logits_3d = predicted_relations[2]
-            rel_logits_2d = predicted_relations[3]
-            # attempt to get edge vectors if provided
-            if len(predicted_relations) >= 6:
-                edge_vecs_3d = predicted_relations[-2]
-                edge_vecs_2d = predicted_relations[-1]
-            else:
-                edge_vecs_3d = None
-                edge_vecs_2d = None
-        else:
-            # If model returns single tensor (older), keep old behavior
-            rel_logits_3d = predicted_relations
-            rel_logits_2d = None
-            edge_vecs_3d = None
-            edge_vecs_2d = None
+    
             
         # print info about logits and edge vectors
-        print(f"rel_logits_3d shape: {rel_logits_3d.shape if rel_logits_2d is not None else 'EMPTY'}")
-        print(f"rel_logits_2d shape: {rel_logits_2d.shape if rel_logits_2d is not None else 'EMPTY'}")
+        print(f"edge_feat_3d shape: {edge_feat_3d.shape if edge_feat_3d is not None else 'EMPTY'}")
+        print(f"edge_feat_2d shape: {edge_feat_2d.shape if edge_feat_2d is not None else 'EMPTY'}")
             
-        return saved_relations
+        return saved_relations, edge_feat_3d, edge_feat_2d
     
 # --- Engine 2: The Advanced Heuristic Predictor ---
 class SceneVerse_Predictor:

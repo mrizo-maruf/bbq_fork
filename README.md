@@ -33,6 +33,9 @@ Open-Vocabulary Object Grounding <br> with 3D Scene Graph</h1>
 pip install trimesh
 pip install shapely
 pip install pyvista
+pip install torch_geometric
+pip install git+https://github.com/openai/CLIP.git
+
 ```
 
 ## BBQ with different edge predictors
