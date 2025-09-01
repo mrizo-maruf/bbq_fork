@@ -376,6 +376,28 @@ class VLSAT_Predictor:
 
         print("Saved to output/scenegraphs/saved_relations.json")
         
+        if isinstance(predicted_relations, tuple):
+            # common layout: (obj_logits_3d, obj_logits_2d, rel_logits_3d, rel_logits_2d, ..., edge_vecs_3d, edge_vecs_2d)
+            rel_logits_3d = predicted_relations[2]
+            rel_logits_2d = predicted_relations[3]
+            # attempt to get edge vectors if provided
+            if len(predicted_relations) >= 6:
+                edge_vecs_3d = predicted_relations[-2]
+                edge_vecs_2d = predicted_relations[-1]
+            else:
+                edge_vecs_3d = None
+                edge_vecs_2d = None
+        else:
+            # If model returns single tensor (older), keep old behavior
+            rel_logits_3d = predicted_relations
+            rel_logits_2d = None
+            edge_vecs_3d = None
+            edge_vecs_2d = None
+            
+        # print info about logits and edge vectors
+        print(f"rel_logits_3d shape: {rel_logits_3d.shape if rel_logits_2d is not None else 'EMPTY'}")
+        print(f"rel_logits_2d shape: {rel_logits_2d.shape if rel_logits_2d is not None else 'EMPTY'}")
+            
         return saved_relations
     
 # --- Engine 2: The Advanced Heuristic Predictor ---
