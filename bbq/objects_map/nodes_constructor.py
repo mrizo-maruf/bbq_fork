@@ -76,6 +76,7 @@ class NodesConstructor:
         for temp, obj in zip(templates, self.objects):
             obj["clip_descriptor"] = temp["clip_descriptor"]
             obj["node_id"] = temp["id"]
+            obj['description'] = temp['description']
             # obj["bbox_extent"] = temp["bbox_extent"]
             # obj["bbox_center"] = temp["bbox_extent"]
             # if obj['id'] == temp['id']:
@@ -87,7 +88,7 @@ class NodesConstructor:
         
         return templates
     
-    def add_edges_vl_sat(self, predicted_edges, edge_feat_3d, edge_feat_2d):
+    def add_edges_vl_sat(self, predicted_edges, edge_feat_3d):
         """
         Adds relational edges to each object (node) in the map.
 
@@ -129,7 +130,7 @@ class NodesConstructor:
                 # An edge is relevant to both nodes. Add the edge dictionary
                 # to the lists of both the subject and the object.
                 edge['3d_feat'] = edge_feat_3d[edge_counter]
-                edge['2d_feat'] = edge_feat_2d[edge_counter]
+                # edge['2d_feat'] = edge_feat_2d[edge_counter]
                 subject_node['edges_vl_sat'].append(edge)
                 edge_counter = edge_counter + 1
             else:

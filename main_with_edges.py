@@ -23,7 +23,7 @@ logging.config.dictConfig({
     'disable_existing_loggers': True,
 })
 
-from build_graph import VLSAT_Predictor
+from build_graph import VLSAT_Predictor, SceneVerse_Predictor
 
 
 class TqdmLoggingHandler:
@@ -119,10 +119,29 @@ def main(args):
         rel_list_path="/home/docker_user/BeyondBareQueries/config/relations.txt"
     )
     
-    vl_sat_edges, edge_feat_3d, edge_feat_2d = predictor_vl_sat.predict(nodes_constructor.objects)
+    vl_sat_edges, edge_feat_3d = predictor_vl_sat.predict(nodes_constructor.objects)
     
-    nodes_constructor.add_edges_vl_sat(vl_sat_edges, edge_feat_3d, edge_feat_2d)
+    nodes_constructor.add_edges_vl_sat(vl_sat_edges, edge_feat_3d)
     
+    predict_sceneverse = SceneVerse_Predictor()
+    nodes_sceneverse = []
+    for obj in nodes_constructor.objects:
+        
+        node_i = {}
+        node_i['id'] = obj['node_id']
+        node_i['bbox_center'] = np.asarray(obj['bbox'].center)
+        node_i['bbox_extent'] = np.asarray(obj['bbox'].extent)
+        node_i['description'] = obj['description']
+        
+        # print(f'DEBUG: {node_i}')
+        
+        nodes_sceneverse.append(node_i)
+        
+    sceneverse_edges = predict_sceneverse.predict(nodes_sceneverse)
+    # print(f"sceneverse edges: {sceneverse_edges}")
+    os.makedirs(config["nodes_constructor"]["output_path"], exist_ok=True)
+    with open(os.path.join( config["nodes_constructor"]["output_path"], "sceneverse_edges.json"), 'w') as f:
+        json.dump(sceneverse_edges, f)
     
     logger.info('Saving objects.')
     os.makedirs(config["nodes_constructor"]["output_path"], exist_ok=True)

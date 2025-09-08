@@ -1,19 +1,19 @@
 dataset:
   name: "isaac"
   base_dir: /home/docker_user/BeyondBareQueries/IsaacSimData
-  sequence: "warehouse"
+  sequence: "warehouse_33"
   start: 0
   end: -1
-  stride: 2
+  stride: 3
   desired_height: 720
   desired_width: 1280
   camera_params:
     image_height: 720
     image_width: 1280
-    fx: 800.0
-    fy: 2354.356853615721
-    cx: 639.5
-    cy: 359.5
+    fx: 800.000
+    fy: 800.000
+    cx: 640.000
+    cy: 360.000
     png_depth_scale: 6553.5 # for depth image in png format
     crop_edge: 0
   relative_pose: False

@@ -64,7 +64,7 @@ def crop_image(image, mask, padding=30):
     return image_crop
 
 def describe_objects(objects, colors, save_path="output/crops"):
-    # chat = LLaVaChat()
+    chat = LLaVaChat()
     logger.info("LLaVA chat is initialized.")
 
     # 3. Instantiate the new CLIP image encoder
@@ -105,8 +105,8 @@ def describe_objects(objects, colors, save_path="output/crops"):
 
         image_features = [image_crop]
         image_sizes = [image.size for image in image_features]
-        # image_features = chat.preprocess_image(image_features)
-        # image_tensor = [image.to("cuda", dtype=torch.float16) for image in image_features]
+        image_features = chat.preprocess_image(image_features)
+        image_tensor = [image.to("cuda", dtype=torch.float16) for image in image_features]
         
         query_tail = """
         The object is one we usually see in indoor scenes. 
@@ -119,9 +119,9 @@ def describe_objects(objects, colors, save_path="output/crops"):
         a gray wall.
         """
         query = query_base + "\n" + query_tail
-        # text = chat(query=query, image_features=image_tensor, image_sizes=image_sizes)
-        # template["description"] = text.replace("<s>", "").replace("</s>", "").strip()
-        template["description"] = """text.replace("<s>", "").replace("</s>", "").strip()"""
+        text = chat(query=query, image_features=image_tensor, image_sizes=image_sizes)
+        template["description"] = text.replace("<s>", "").replace("</s>", "").strip()
+        # template["description"] = """text.replace("<s>", "").replace("</s>", "").strip()"""
 
         # This part for saving individual images remains the same
         if save_path:

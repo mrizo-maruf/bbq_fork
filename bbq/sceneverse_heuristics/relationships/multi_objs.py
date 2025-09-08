@@ -39,6 +39,7 @@ def are_furniture_aligned(furniture1, furniture2, offset_threshold):
 
 
 def find_aligned_furniture(furniture_list, ObjNode_dict, offset_threshold):
+    # print(f"DEBUG: furniture list: {furniture_list}")
     aligned_furniture = []
 
     for i, object_id1 in enumerate(furniture_list):
@@ -50,13 +51,17 @@ def find_aligned_furniture(furniture_list, ObjNode_dict, offset_threshold):
             furniture2 = {'center': np.array(obj2.position), 'size': obj2.z_max - obj2.z_min, 'rect': obj2.bottom_rect}
             is_aligned = are_furniture_aligned(furniture1, furniture2, offset_threshold)
             if is_aligned:
+                print(f'DEGUB obj1.id, obj2.id, is_aligned: {obj1.id, obj2.id, is_aligned}')
                 aligned_group = [obj1.id, obj2.id, is_aligned]
                 aligned_furniture.append(aligned_group)
 
+    # print(f'DEBUG: {aligned_furniture}')
     aligned_furniture_merge = furniture_merge_lists(aligned_furniture)
+    # print(f'DEBUG aligned_furniture_merge {aligned_furniture_merge}')
     return aligned_furniture_merge
 
 def furniture_merge_lists(lists):
+    # print(f'DEBUG: aligned furniture furniture_merge_lists: {lists}')
     merged_lists = []
 
     x_list = [lst[:2] for lst in lists if 'x' in lst]

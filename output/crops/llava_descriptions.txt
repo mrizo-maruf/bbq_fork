@@ -1,12 +1,3 @@
-Object 0: text.replace("<s>", "").replace("</s>", "").strip()
-Object 1: text.replace("<s>", "").replace("</s>", "").strip()
-Object 2: text.replace("<s>", "").replace("</s>", "").strip()
-Object 3: text.replace("<s>", "").replace("</s>", "").strip()
-Object 4: text.replace("<s>", "").replace("</s>", "").strip()
-Object 5: text.replace("<s>", "").replace("</s>", "").strip()
-Object 6: text.replace("<s>", "").replace("</s>", "").strip()
-Object 7: text.replace("<s>", "").replace("</s>", "").strip()
-Object 8: text.replace("<s>", "").replace("</s>", "").strip()
-Object 9: text.replace("<s>", "").replace("</s>", "").strip()
-Object 10: text.replace("<s>", "").replace("</s>", "").strip()
-Object 11: text.replace("<s>", "").replace("</s>", "").strip()
+Object 0: A black and yellow forklift seat.
+Object 1: Yellow plastic toy car.
+Object 2: Yellow toy car on blue floor.

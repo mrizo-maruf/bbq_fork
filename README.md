@@ -36,7 +36,9 @@ pip install pyvista
 pip install torch_geometric
 pip install git+https://github.com/openai/CLIP.git
 
+# download and put weights to path '/home/docker_user/BeyondBareQueries/3dssg_best_ckpt'
 ```
+
 
 ## BBQ with different edge predictors
 0. full bbq with vl sat edge prediction integrated

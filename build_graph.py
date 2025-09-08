@@ -24,6 +24,8 @@ from itertools import product
 import open3d as o3d
 from collections import Counter
 import random
+import itertools
+
 
 # --- Helper functions required by the BBQ Heuristic ---
 def egoview_project(target, anchor, center):
@@ -360,7 +362,7 @@ class VLSAT_Predictor:
         )
         
         # 3. Predict
-        predicted_relations, edge_feat_3d, edge_feat_2d = self.predict_relations(obj_points, obj_2d_feats, edge_indices, descriptor, batch_ids)
+        predicted_relations, edge_feat_3d, _ = self.predict_relations(obj_points, obj_2d_feats, edge_indices, descriptor, batch_ids)
         topk_values, topk_indices = torch.topk(predicted_relations, 5, dim=1,  largest=True)
         # print(topk_indices, topk_values)
         
@@ -379,9 +381,8 @@ class VLSAT_Predictor:
             
         # print info about logits and edge vectors
         print(f"edge_feat_3d shape: {edge_feat_3d.shape if edge_feat_3d is not None else 'EMPTY'}")
-        print(f"edge_feat_2d shape: {edge_feat_2d.shape if edge_feat_2d is not None else 'EMPTY'}")
             
-        return saved_relations, edge_feat_3d, edge_feat_2d
+        return saved_relations, edge_feat_3d
     
 # --- Engine 2: The Advanced Heuristic Predictor ---
 class SceneVerse_Predictor:
@@ -404,6 +405,7 @@ class SceneVerse_Predictor:
         """
         Helper function to convert a BBQ object dict to a SceneVerse ObjNode.
         """
+        # print(f'DEBUG: obj node keys: {bbq_node.keys()}')
         return ObjNode(
             id=bbq_node['id'],
             label=bbq_node['description'],
@@ -423,6 +425,8 @@ class SceneVerse_Predictor:
             return []
 
         # 1. Use the adapter to convert all BBQ nodes to SceneVerse ObjNodes
+        
+        # print(f'DEBUG: nodes from bbq to sceneverse: {nodes}')
         ObjNode_dict = {node['id']: self._convert_bbq_to_sceneverse(node) for node in nodes}
 
         # Calculate scene boundaries, which some heuristics need
@@ -492,9 +496,11 @@ class SceneVerse_Predictor:
         # Process multi-object relations
         for rel in aligned_furniture:
             # Format: [[id1, id2, id3], "Aligned"]
-            obj_ids, relation_name = rel
+            # obj_ids, relation_name = rel
+            obj_ids = rel
             # Create pairwise "aligned with" relations
-            for id1, id2 in combinations(obj_ids, 2):
+            # print(f'DEBUG: {obj_ids}')
+            for id1, id2 in itertools.combinations(obj_ids, 2):
                 edges.append({"source": id1, "target": id2, "relation": "aligned with"})
 
         for rel in middle_relationships:
@@ -548,7 +554,7 @@ def build_graph(input_nodes_path, predictor_type):
     print(f"Loading nodes from {input_nodes_path}...")
     
     if predictor_type in ['bbq', 'sceneverse']:
-        input_nodes_path = "/home/rizo/mipt_ccm/bbq_fork/output/scenes/08.17.2025_23:35:41_isaac_warehouse.json"
+        input_nodes_path = "/home/docker_user/BeyondBareQueries/output/scenes/09.08.2025_12:20:14_edgeisaac_warehouse.json"
         # These predictors only need the JSON file with bounding boxes.
         if not input_nodes_path.endswith('.json'):
             raise ValueError("For 'bbq' or 'sceneverse' predictors, the --input file must be the ...nodes.json file.")
@@ -608,7 +614,7 @@ if __name__ == "__main__":
     )
     
     args = parser.parse_args()
-    input_file = "/home/docker_user/BeyondBareQueries/output/scenes/08.27.2025_16:31:14_isaac_warehouse_objects.pkl.gz"
+    input_file = "/home/docker_user/BeyondBareQueries/output/scenes/09.08.2025_12:32:32_edgeisaac_warehouse_objects.pkl.gz"
     
     build_graph(
         input_nodes_path=input_file,
