@@ -1,3 +1,6 @@
-Object 0: A black and yellow forklift seat.
-Object 1: Yellow plastic toy car.
-Object 2: Yellow toy car on blue floor.
+Object 0: Tire on car.
+Object 1: Tire with white dots.
+Object 2: Yellow door with black handle.
+Object 3: Tire with silver hubcap.
+Object 4: A black and yellow toy car.
+Object 5: Tire on a vehicle.

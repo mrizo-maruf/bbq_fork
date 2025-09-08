@@ -441,7 +441,7 @@ class SceneVerse_Predictor:
         # A. Support and Embedded relationships (The "Gravity" Specialist)
         support_relations, embedded_relations, hanging_objs_dict = cal_support_relations(ObjNode_dict, self.camera_angle)
         
-        print(f"support rel: {support_relations}, embedded_relations: {embedded_relations}, hanging_objs_dict: {hanging_objs_dict}")
+        # print(f"support rel: {support_relations}, embedded_relations: {embedded_relations}, hanging_objs_dict: {hanging_objs_dict}")
         
         # B. Build a temporary graph to find neighbors for proximity checks
         G = nx.DiGraph()
@@ -475,7 +475,7 @@ class SceneVerse_Predictor:
         all_ids = list(ObjNode_dict.keys())
         aligned_furniture = find_aligned_furniture(all_ids, ObjNode_dict, 0.065)
         middle_relationships = find_middle_furniture(proximity_relations, ObjNode_dict)
-        print(f"aligned_furniture: {aligned_furniture}, middle_relationships: {middle_relationships}")
+        # print(f"aligned_furniture: {aligned_furniture}, middle_relationships: {middle_relationships}")
 
         # 3. Collect all relationship lists into one master list
         # Note: multi-object relations have a different format, so we handle them separately.
@@ -505,7 +505,8 @@ class SceneVerse_Predictor:
 
         for rel in middle_relationships:
             # Format: [middle_obj_id, [obj1_id, obj2_id], "in the middle of"]
-            middle_id, (id1, id2), relation_name = rel
+            # print(f'DEBUG: middle relations {rel}')
+            (middle_id, id1, id2), relation_name = rel
             edges.append({"source": middle_id, "target": id1, "relation": "in middle of"})
             edges.append({"source": middle_id, "target": id2, "relation": "in middle of"})
             

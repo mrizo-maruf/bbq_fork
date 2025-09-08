@@ -51,7 +51,7 @@ def find_aligned_furniture(furniture_list, ObjNode_dict, offset_threshold):
             furniture2 = {'center': np.array(obj2.position), 'size': obj2.z_max - obj2.z_min, 'rect': obj2.bottom_rect}
             is_aligned = are_furniture_aligned(furniture1, furniture2, offset_threshold)
             if is_aligned:
-                print(f'DEGUB obj1.id, obj2.id, is_aligned: {obj1.id, obj2.id, is_aligned}')
+                # print(f'DEGUB obj1.id, obj2.id, is_aligned: {obj1.id, obj2.id, is_aligned}')
                 aligned_group = [obj1.id, obj2.id, is_aligned]
                 aligned_furniture.append(aligned_group)
 

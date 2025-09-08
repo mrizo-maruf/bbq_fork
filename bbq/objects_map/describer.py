@@ -63,9 +63,14 @@ def crop_image(image, mask, padding=30):
 
     return image_crop
 
-def describe_objects(objects, colors, save_path="output/crops"):
-    chat = LLaVaChat()
-    logger.info("LLaVA chat is initialized.")
+def describe_objects(objects, colors, save_path="output/crops", isLLava=True):
+    # Initialize LLaVA chat only if isLLava is True
+    chat = None
+    if isLLava:
+        chat = LLaVaChat()
+        logger.info("LLaVA chat is initialized.")
+    else:
+        logger.info("Using dummy descriptions (LLaVA disabled).")
 
     # 3. Instantiate the new CLIP image encoder
     clip_encoder = CLIPImageEncoder()
@@ -102,26 +107,30 @@ def describe_objects(objects, colors, save_path="output/crops"):
         template["clip_descriptor"] = clip_descriptor
         # print(f"Generated CLIP descriptor: {len(clip_descriptor)}")
 
-
-        image_features = [image_crop]
-        image_sizes = [image.size for image in image_features]
-        image_features = chat.preprocess_image(image_features)
-        image_tensor = [image.to("cuda", dtype=torch.float16) for image in image_features]
-        
-        query_tail = """
-        The object is one we usually see in indoor scenes. 
-        It signature must be short and sparse, describe appearance, geometry, material. Don't describe background.
-        Fit you description in four or five words.
-        Examples: 
-        a closed wooden door with a glass panel;
-        a pillow with a floral pattern;
-        a wooden table;
-        a gray wall.
-        """
-        query = query_base + "\n" + query_tail
-        text = chat(query=query, image_features=image_tensor, image_sizes=image_sizes)
-        template["description"] = text.replace("<s>", "").replace("</s>", "").strip()
-        # template["description"] = """text.replace("<s>", "").replace("</s>", "").strip()"""
+        # Generate description based on isLLava parameter
+        if isLLava:
+            # Use LLaVA for description generation
+            image_features = [image_crop]
+            image_sizes = [image.size for image in image_features]
+            image_features = chat.preprocess_image(image_features)
+            image_tensor = [image.to("cuda", dtype=torch.float16) for image in image_features]
+            
+            query_tail = """
+            The object is one we usually see in indoor scenes. 
+            It signature must be short and sparse, describe appearance, geometry, material. Don't describe background.
+            Fit you description in four or five words.
+            Examples: 
+            a closed wooden door with a glass panel;
+            a pillow with a floral pattern;
+            a wooden table;
+            a gray wall.
+            """
+            query = query_base + "\n" + query_tail
+            text = chat(query=query, image_features=image_tensor, image_sizes=image_sizes)
+            template["description"] = text.replace("<s>", "").replace("</s>", "").strip()
+        else:
+            # Use dummy description
+            template["description"] = f"object_{idx}"
 
         # This part for saving individual images remains the same
         if save_path:

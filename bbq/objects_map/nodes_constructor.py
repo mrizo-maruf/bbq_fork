@@ -71,7 +71,7 @@ class NodesConstructor:
         )
 
     def describe(self, colors):
-        templates = describe_objects(self.objects, colors)
+        templates = describe_objects(self.objects, colors, isLLava=True)
         
         for temp, obj in zip(templates, self.objects):
             obj["clip_descriptor"] = temp["clip_descriptor"]
@@ -140,6 +140,44 @@ class NodesConstructor:
                     logger.warning(f"subject_id {type(subject_id)}, object node id: {type(self.objects[0]['node_id'])}")
                     logger.warning(f"subject_id {subject_id}, object node id: {self.objects[0]['node_id']}")
 
+    def add_edges_sv(self, predicted_edges_sv):
+        # Step 1: Initialize an empty 'edges' list for every object.
+        # This ensures the key exists even for nodes with no connections.
+        for obj in self.objects:
+            obj['edges_sv'] = []
+            
+        # Step 2: Create a mapping from node_id to the object dictionary.
+        # This is for efficient lookup (O(1) on average) and avoids slow,
+        # repetitive searching through the self.objects list in a loop.
+        try:
+            node_map = {obj['node_id']: obj for obj in self.objects}
+        except KeyError:
+            logger.error("Could not create node map. Make sure 'describe()' has been run and objects have 'node_id'.")
+            return
+
+        edge_counter = 0
+        # Step 3: Iterate through each edge and add it to the relevant nodes.
+        for edge in predicted_edges_sv:
+            subject_id = edge['source']
+            object_id = edge['target']
+            
+            # Find the corresponding node objects using our fast lookup map
+            subject_node = node_map.get(subject_id)
+            # object_node = node_map.get(object_id)
+
+            # Check if both nodes involved in the edge exist in our map
+            if subject_node:
+                # An edge is relevant to both nodes. Add the edge dictionary
+                # to the lists of both the subject and the object.
+                subject_node['edges_sv'].append(edge)
+            else:
+                # Log a warning if a node mentioned in an edge wasn't found.
+                if not subject_node:
+                    logger.warning(f"Node with ID {subject_id} from an edge was not found in self.objects.")
+                    logger.warning(f"subject_id {type(subject_id)}, object node id: {type(self.objects[0]['node_id'])}")
+                    logger.warning(f"subject_id {subject_id}, object node id: {self.objects[0]['node_id']}")
+
+    
     # def add_edge_feat(self, edge_feat_3d, edge_feat_2d):
     #     for node in self.objects:
     #         node['edge_feat_3d'] = []
