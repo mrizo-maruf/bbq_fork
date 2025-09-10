@@ -1,6 +1,14 @@
-Object 0: Tire on car.
-Object 1: Tire with white dots.
-Object 2: Yellow door with black handle.
-Object 3: Tire with silver hubcap.
-Object 4: A black and yellow toy car.
-Object 5: Tire on a vehicle.
+Object 0: A gray cube.
+Object 1: A gray table.
+Object 2: Red chair with black seat.
+Object 3: Red chair with metal frame and blue floor.
+Object 4: Red chair with silver frame.
+Object 5: Red chair with silver frame and black armrests.
+Object 6: Red chair with silver frame and wheels.
+Object 7: Red chair with metal legs.
+Object 8: Red chair with metal frame and red seat.
+Object 9: Red chair with green trim.
+Object 10: A black metal leg.
+Object 11: Bowl with stripes.
+Object 12: Bowl on stand.
+Object 13: Red chair with metal frame.

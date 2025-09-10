@@ -179,7 +179,7 @@ if __name__ == "__main__":
                    "For more information see Sec. 3.1 - 3.6.")
     parser.add_argument(
         "--config_path", 
-        default="examples/configs/isaac/warehouse.yaml",
+        default="examples/configs/isaac/scene_02_small_table.yaml",
         help="Path to configuration file")
     parser.add_argument(
         "--logger_level", 
