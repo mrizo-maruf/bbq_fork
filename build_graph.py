@@ -166,7 +166,8 @@ class VLSAT_Predictor:
             self.relationships_list = [line.strip() for line in f.readlines() if line.strip()!='']
 
         self.rel_id_to_rel_name = {i: name for i, name in enumerate(self.relationships_list)}
-    
+        print(self.rel_id_to_rel_name)
+        
     def _bbox_center_from_bbox_np(self, bbox_np):
         """
         bbox_np: (N,3) numpy array of bounding box corner points (e.g. 8 corners).
@@ -187,8 +188,11 @@ class VLSAT_Predictor:
         print(f"Num objects: {num_objects}")
             
 
+        # print(f"DEBUG: pcd type: {type(bbq_objects[0]['pcd'])}, bbox type: {type(bbq_objects[0]['bbox'])}")
         pcds = {}
         for obj_id, obj in enumerate(bbq_objects):
+            # print(f'DEBUG: obj keys: {obj.keys()}')
+            
             pcds[obj_id] = {}
             pcd_o3d = o3d.geometry.PointCloud()
             

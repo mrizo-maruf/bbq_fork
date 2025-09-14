@@ -71,7 +71,7 @@ class NodesConstructor:
         )
 
     def describe(self, colors):
-        templates = describe_objects(self.objects, colors, isLLava=True)
+        templates = describe_objects(self.objects, colors, isLLava=False)
         
         for temp, obj in zip(templates, self.objects):
             obj["clip_descriptor"] = temp["clip_descriptor"]
