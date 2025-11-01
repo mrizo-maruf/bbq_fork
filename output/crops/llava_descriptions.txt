@@ -4,10 +4,3 @@ Object 2: object_2
 Object 3: object_3
 Object 4: object_4
 Object 5: object_5
-Object 6: object_6
-Object 7: object_7
-Object 8: object_8
-Object 9: object_9
-Object 10: object_10
-Object 11: object_11
-Object 12: object_12
