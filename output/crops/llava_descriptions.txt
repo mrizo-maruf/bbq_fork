@@ -11,5 +11,3 @@ Object 9: object_9
 Object 10: object_10
 Object 11: object_11
 Object 12: object_12
-Object 13: object_13
-Object 14: object_14

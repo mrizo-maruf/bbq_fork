@@ -22,12 +22,13 @@ def main(args):
         meta_info = pickle.load(file)
     config = meta_info["config"]
 
+    print(f"Before window")
     vis = o3d.visualization.VisualizerWithKeyCallback()
     vis.create_window(
         window_name = "Mapping",
         width = config["dataset"]["desired_width"],
         height = config["dataset"]["desired_height"],
-        visible=True
+        visible=False
     )
     view_ctrl = vis.get_view_control()
     view_ctrl.change_field_of_view(10)
@@ -36,6 +37,7 @@ def main(args):
     result_frames = []
     rgbd_dataset = get_dataset(config["dataset"])
     for step_idx, frame in enumerate(rgbd_dataset):
+        print(f"step_idx: {step_idx}")
         color, _, _, pose = frame
 
         # load the mapping results up to this frame
