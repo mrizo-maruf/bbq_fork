@@ -15,7 +15,7 @@ from loguru import logger
 
 from bbq.datasets import get_dataset
 from bbq.objects_map import NodesConstructor
-from build_graph import VLSAT_Predictor, SceneVerse_Predictor
+from build_graph import BBQ_Predictor
 
 warnings.filterwarnings('ignore')
 
@@ -114,93 +114,79 @@ def save_nodes_json(config, timestamp, nodes, suffix=""):
     with open(filepath, 'w') as f:
         json.dump(nodes, f)
 
-
+def convert_sets(obj):
+    if isinstance(obj, set):
+        return list(obj)
+    if isinstance(obj, dict):
+        return {k: convert_sets(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [convert_sets(v) for v in obj]
+    return obj
+    
 def save_edges_json(config, edges, filename="sceneverse_edges.json"):
     """Save edges to JSON file."""
     output_path = config["nodes_constructor"]["output_path"]
     os.makedirs(output_path, exist_ok=True)
     
+    filename = f'{config["dataset"]["sequence"]}.json'
     filepath = os.path.join(output_path, filename)
     with open(filepath, 'w') as f:
-        json.dump(edges, f)
+        json.dump(convert_sets(edges), f)
 
-def main(args):
+from pathlib import Path
+
+def get_subfolders(path):
+    p = Path(path)
+    return [f.name for f in p.iterdir() if f.is_dir()]
+
+def main(config_path, dataset_sequences):
     """Main function to build 3D scene graph with edges."""
     timestamp = datetime.now()
     
     # Load configuration
-    with open(args.config_path) as file:
+    with open(config_path) as file:
         config = yaml.full_load(file)
     
-    # Save metadata if save_path is provided
-    if args.save_path:
-        os.makedirs(args.save_path, exist_ok=True)
-        with gzip.open(os.path.join(args.save_path, "meta.pkl.gz"), "wb") as file:
-            pickle.dump({"config": config}, file)
-    
-    logger.info(f"Parsed arguments. Utilizing config from {args.config_path}.")
+    for sequence_name in dataset_sequences:
+        config["dataset"]["sequence"] = sequence_name
+        print("======= WORKING ON SEQUENCE:", config["dataset"]["sequence"], "=======")
 
-    # Initialize components
-    nodes_constructor = NodesConstructor(config["nodes_constructor"])
-    rgbd_dataset = get_dataset(config["dataset"])
+        # Initialize components
+        nodes_constructor = NodesConstructor(config["nodes_constructor"])
+        rgbd_dataset = get_dataset(config["dataset"])
 
-    # Section 3.1: Process RGBD sequence to accumulate 3D objects
-    logger.info("Iterating over RGBD sequence to accumulate 3D objects.")
-    for step_idx in tqdm(range(len(rgbd_dataset))):
-        frame = rgbd_dataset[step_idx]
-        nodes_constructor.integrate(step_idx, frame, args.save_path)
+        # Section 3.1: Process RGBD sequence to accumulate 3D objects
+        logger.info("Iterating over RGBD sequence to accumulate 3D objects.")
+        for step_idx in tqdm(range(len(rgbd_dataset))):
+            frame = rgbd_dataset[step_idx]
+            nodes_constructor.integrate(step_idx, frame)
+            torch.cuda.empty_cache()
+        
+        nodes_constructor.postprocessing()
         torch.cuda.empty_cache()
-    
-    nodes_constructor.postprocessing()
-    torch.cuda.empty_cache()
-    
-    # Save intermediate results if save_path is provided
-    if args.save_path:
-        results = {'objects': nodes_constructor.objects.to_serializable()}
-        with gzip.open(os.path.join(args.save_path, "frame_last_objects.pkl.gz"), "wb") as f:
-            pickle.dump(results, f)
 
-    # Section 3.2: Find 2D view to caption 3D objects
-    logger.info('Finding 2D view to caption 3D objects.')
-    nodes_constructor.project(
-        poses=rgbd_dataset.poses,
-        intrinsics=rgbd_dataset.get_cam_K()
-    )
-    torch.cuda.empty_cache()
+        # Section 3.2: Find 2D view to caption 3D objects
+        logger.info('Finding 2D view to caption 3D objects.')
+        nodes_constructor.project(
+            poses=rgbd_dataset.poses,
+            intrinsics=rgbd_dataset.get_cam_K()
+        )
+        torch.cuda.empty_cache()
 
-    # Section 3.3: Caption 3D objects
-    logger.info('Captioning 3D objects.')
-    nodes = nodes_constructor.describe(colors=rgbd_dataset.color_paths)
-    torch.cuda.empty_cache()
+        # Section 3.3: Caption 3D objects
+        logger.info('Captioning 3D objects.')
+        nodes = nodes_constructor.describe(colors=rgbd_dataset.color_paths)
+        torch.cuda.empty_cache()
 
-    # Section 3.4: Predict edges using VL-SAT
-    logger.info('Predicting VL-SAT based edges')
-    predictor_vl_sat = VLSAT_Predictor(
-        model_path="/home/docker_user/BeyondBareQueries/3dssg_best_ckpt",
-        config_path="config/mmgnet.json",
-        rel_list_path="/home/docker_user/BeyondBareQueries/config/relations.txt"
-    )
-    
-    vl_sat_edges, edge_feat_3d = predictor_vl_sat.predict(nodes_constructor.objects)
-    nodes_constructor.add_edges_vl_sat(vl_sat_edges, edge_feat_3d)
+        # Section 3.4: Predict edges using BBQ
+        logger.info('Predicting BBQ based edges')
+        bbq_edge_predictor = BBQ_Predictor()
+        bbq_graph = bbq_edge_predictor.predict(nodes_constructor.objects)
 
-    # Section 3.5: Predict edges using SceneVerse heuristics
-    logger.info('Predicting SceneVerse based edges')
-    predict_sceneverse = SceneVerse_Predictor()
-    nodes_sceneverse = create_sceneverse_nodes(nodes_constructor.objects)
-    sceneverse_edges = predict_sceneverse.predict(nodes_sceneverse)
-    nodes_constructor.add_edges_sv(sceneverse_edges)
-    
-    # Save SceneVerse edges
-    save_edges_json(config, sceneverse_edges, "sceneverse_edges.json")
+        # Section 3.5: Save BBQ edges
+        save_edges_json(config, bbq_graph)
 
-    # Save nodes with edges with bbox info
-    save_objects_to_json(config, nodes_constructor.objects, "nodes_edges.json")
-    
-    # Section 3.6: Save final results
-    logger.info('Saving final objects and nodes.')
-    save_objects(config, timestamp, nodes_constructor.objects, "_edge")
-    save_nodes_json(config, timestamp, nodes, "_edge")
+        torch.cuda.empty_cache()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -208,7 +194,7 @@ if __name__ == "__main__":
                    "For more information see Sec. 3.1 - 3.6.")
     parser.add_argument(
         "--config_path", 
-        default="examples/configs/isaac/franka_cab_dex_more.yaml",
+        default="examples/configs/isaac/m3po_bbq_edges.yaml",
         help="Path to configuration file")
     parser.add_argument(
         "--logger_level", 
@@ -227,4 +213,8 @@ if __name__ == "__main__":
 
     # Run main pipeline
     set_seed()
-    main(args)
+    config_path = "/home/docker_user/BeyondBareQueries/examples/configs/isaac/m3po_bbq_edges.yaml"
+    folders = get_subfolders("/home/docker_user/BeyondBareQueries/IsaacSimData/M3PO2")
+
+    print(f"SCENES TO WORK WITH {folders}")
+    main(config_path, folders)

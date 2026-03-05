@@ -77,8 +77,8 @@ class NodesConstructor:
             obj["clip_descriptor"] = temp["clip_descriptor"]
             obj["node_id"] = temp["id"]
             obj['description'] = temp['description']
-            # obj["bbox_extent"] = temp["bbox_extent"]
-            # obj["bbox_center"] = temp["bbox_extent"]
+            obj["bbox_extent"] = temp["bbox_extent"]
+            obj["bbox_center"] = temp["bbox_extent"]
             # if obj['id'] == temp['id']:
             # else:
             #     print(f"IDs did not match, obj id: {obj['id']}, temp id: {temp['id']}")

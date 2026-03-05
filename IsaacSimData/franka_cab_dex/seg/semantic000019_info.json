@@ -1,0 +1,72 @@
+{
+    "0": {
+        "instance_seg_id": 0,
+        "bbox_2d_id": -1,
+        "bbox_3d_id": -1,
+        "prim_path": "BACKGROUND",
+        "label": {
+            "class": "BACKGROUND"
+        },
+        "color_bgr": [
+            0,
+            0,
+            0
+        ]
+    },
+    "1": {
+        "instance_seg_id": 1,
+        "bbox_2d_id": -1,
+        "bbox_3d_id": -1,
+        "prim_path": "UNLABELLED",
+        "label": {
+            "class": "UNLABELLED"
+        },
+        "color_bgr": [
+            216,
+            109,
+            65
+        ]
+    },
+    "2": {
+        "instance_seg_id": 2,
+        "bbox_2d_id": 0,
+        "bbox_3d_id": 0,
+        "prim_path": "/World/env/room",
+        "label": {
+            "wall": "wall"
+        },
+        "color_bgr": [
+            50,
+            255,
+            170
+        ]
+    },
+    "3": {
+        "instance_seg_id": 3,
+        "bbox_2d_id": 1,
+        "bbox_3d_id": 1,
+        "prim_path": "/World/env/sektion_cabinet_instanceable",
+        "label": {
+            "cabinet": "white cabinet"
+        },
+        "color_bgr": [
+            158,
+            17,
+            178
+        ]
+    },
+    "5": {
+        "instance_seg_id": 5,
+        "bbox_2d_id": 3,
+        "bbox_3d_id": -1,
+        "prim_path": "/World/env/floor",
+        "label": {
+            "ground": "ground"
+        },
+        "color_bgr": [
+            76,
+            173,
+            255
+        ]
+    }
+}

@@ -283,6 +283,45 @@ class ReplicaDataset(GradSLAMDataset):
             poses.append(c2w)
         return poses
 
+class IsaacSimDataset(GradSLAMDataset):
+    def __init__(
+        self,
+        stride: Optional[int] = None,
+        start: Optional[int] = 0,
+        end: Optional[int] = -1,
+        desired_height: Optional[int] = 480,
+        desired_width: Optional[int] = 640,
+        **kwargs,
+    ):
+        self.input_folder = os.path.join(kwargs["base_dir"], kwargs["sequence"])
+        self.pose_path = os.path.join(self.input_folder, "traj.txt")
+        super().__init__(
+            stride=stride,
+            start=start,
+            end=end,
+            desired_height=desired_height,
+            desired_width=desired_width,
+            **kwargs,
+        )
+
+    def get_filepaths(self):
+        color_paths = natsorted(glob.glob(f"{self.input_folder}/rgb/frame*.jpg"))
+        depth_paths = natsorted(glob.glob(f"{self.input_folder}/depth/depth*.png"))
+        return color_paths, depth_paths
+
+    def load_poses(self):
+        poses = []
+        with open(self.pose_path, "r") as f:
+            lines = f.readlines()
+        for i in range(self.num_imgs):
+            line = lines[i]
+            c2w = np.array(list(map(float, line.split()))).reshape(4, 4)
+            # c2w[:3, 1] *= -1
+            # c2w[:3, 2] *= -1
+            c2w = torch.from_numpy(c2w).float()
+            poses.append(c2w)
+        return poses
+
 class ScannetDataset(GradSLAMDataset):
     def __init__(
         self,
@@ -324,7 +363,7 @@ def get_dataset(config):
     elif config["name"] == "ScanNet":
         return ScannetDataset(**config)
     elif config["name"] == "isaac":
-        print(f'Dataset: {config["name"]}')
-        return ReplicaDataset(**config)
+        print(f'USING DATASET: {config["name"]}')
+        return IsaacSimDataset(**config)
     else:
         return NotImplementedError

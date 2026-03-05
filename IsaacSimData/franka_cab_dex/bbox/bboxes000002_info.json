@@ -1,0 +1,211 @@
+{
+    "bboxes": {
+        "bbox_2d_tight": {
+            "boxes": [
+                {
+                    "bbox_2d_id": 0,
+                    "bbox_2d_semantic_id": 0,
+                    "instance_seg_id": 2,
+                    "bbox_3d_id": 0,
+                    "prim_path": "/World/env/room",
+                    "label": {
+                        "wall": "wall"
+                    },
+                    "semantic_label": {
+                        "wall": "wall"
+                    },
+                    "xyxy": [
+                        0.0,
+                        0.0,
+                        1279.0,
+                        486.0
+                    ],
+                    "visibility_or_occlusion": -1.0
+                },
+                {
+                    "bbox_2d_id": 1,
+                    "bbox_2d_semantic_id": 1,
+                    "instance_seg_id": 3,
+                    "bbox_3d_id": 1,
+                    "prim_path": "/World/env/sektion_cabinet_instanceable",
+                    "label": {
+                        "cabinet": "cabinet,white"
+                    },
+                    "semantic_label": {
+                        "cabinet": "white cabinet"
+                    },
+                    "xyxy": [
+                        297.0,
+                        347.0,
+                        704.0,
+                        719.0
+                    ],
+                    "visibility_or_occlusion": -1.0
+                },
+                {
+                    "bbox_2d_id": 3,
+                    "bbox_2d_semantic_id": 2,
+                    "instance_seg_id": 5,
+                    "bbox_3d_id": -1,
+                    "prim_path": "/World/env/floor",
+                    "label": {
+                        "ground": "ground"
+                    },
+                    "semantic_label": {
+                        "ground": "ground"
+                    },
+                    "xyxy": [
+                        0.0,
+                        291.0,
+                        1279.0,
+                        719.0
+                    ],
+                    "visibility_or_occlusion": 0.2816999852657318
+                }
+            ]
+        },
+        "bbox_3d": {
+            "boxes": [
+                {
+                    "track_id": 0,
+                    "bbox_3d_id": 0,
+                    "bbox_3d_semantic_id": 0,
+                    "instance_seg_id": 2,
+                    "bbox_2d_id": 0,
+                    "prim_path": "/World/env/room",
+                    "label": "wall",
+                    "semantic_label": {
+                        "wall": "wall"
+                    },
+                    "aabb_xyzmin_xyzmax": [
+                        -4.005000114440918,
+                        -3.005000114440918,
+                        0.0,
+                        4.005000114440918,
+                        3.005000114440918,
+                        3.0
+                    ],
+                    "transform_4x4": [
+                        [
+                            1.0,
+                            0.0,
+                            0.0,
+                            -4.0
+                        ],
+                        [
+                            0.0,
+                            1.0,
+                            0.0,
+                            -3.0
+                        ],
+                        [
+                            0.0,
+                            0.0,
+                            1.0,
+                            1.0
+                        ],
+                        [
+                            0.0,
+                            0.0,
+                            0.0,
+                            1.0
+                        ]
+                    ],
+                    "occlusion_ratio": -1.0
+                },
+                {
+                    "track_id": 1,
+                    "bbox_3d_id": 1,
+                    "bbox_3d_semantic_id": 1,
+                    "instance_seg_id": 3,
+                    "bbox_2d_id": 1,
+                    "prim_path": "/World/env/sektion_cabinet_instanceable",
+                    "label": "cabinet,white",
+                    "semantic_label": {
+                        "cabinet": "white cabinet"
+                    },
+                    "aabb_xyzmin_xyzmax": [
+                        0.6371705532073975,
+                        -0.381885051727295,
+                        0.0260201096534729,
+                        1.304999589920044,
+                        0.38188511133193975,
+                        0.81212317943573
+                    ],
+                    "transform_4x4": [
+                        [
+                            -1.0,
+                            -1.2246468525851679e-16,
+                            0.0,
+                            1.0
+                        ],
+                        [
+                            1.2246468525851679e-16,
+                            -1.0,
+                            0.0,
+                            0.0
+                        ],
+                        [
+                            0.0,
+                            0.0,
+                            1.0,
+                            0.41012322902679443
+                        ],
+                        [
+                            0.0,
+                            0.0,
+                            0.0,
+                            1.0
+                        ]
+                    ],
+                    "occlusion_ratio": -1.0
+                },
+                {
+                    "track_id": 2,
+                    "bbox_3d_id": 2,
+                    "bbox_3d_semantic_id": 2,
+                    "instance_seg_id": -1,
+                    "bbox_2d_id": -1,
+                    "prim_path": "/World/env/GroundPlane",
+                    "label": "gray",
+                    "semantic_label": {},
+                    "aabb_xyzmin_xyzmax": [
+                        -25.0,
+                        -25.0,
+                        0.0,
+                        25.0,
+                        25.0,
+                        0.0
+                    ],
+                    "transform_4x4": [
+                        [
+                            1.0,
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        [
+                            0.0,
+                            1.0,
+                            0.0,
+                            0.0
+                        ],
+                        [
+                            0.0,
+                            0.0,
+                            1.0,
+                            0.0
+                        ],
+                        [
+                            0.0,
+                            0.0,
+                            0.0,
+                            1.0
+                        ]
+                    ],
+                    "occlusion_ratio": 1.0
+                }
+            ]
+        }
+    }
+}

@@ -47,17 +47,17 @@ def get_semantic_edge(target, anchor, center_point):
 
     relations = []
     if target_pos_2d[0, 0] < anchor_pose_2d[0, 0]:
-        relations.append("left")
+        relations.append(([1, 0, 0, 0, 0, 0], "left"))
     if target_pos_2d[0, 0] > anchor_pose_2d[0, 0]:
-        relations.append("right")
+        relations.append(([0, 1, 0, 0, 0, 0], "right"))
     if target_pos_2d[0, 2] < anchor_pose_2d[0, 2]:
-        relations.append("front")
+        relations.append(([0, 0, 1, 0, 0, 0], "front"))
     if target_pos_2d[0, 2] > anchor_pose_2d[0, 2]:
-        relations.append("back")
+        relations.append(([0, 0, 0, 1, 0, 0], "back"))
     if target_pos_2d[0, 1] < anchor_pose_2d[0, 1]:
-        relations.append("above")
+        relations.append(([0, 0, 0, 0, 1, 0], "above"))
     if target_pos_2d[0, 1] > anchor_pose_2d[0, 1]:
-        relations.append("below")
+        relations.append(([0, 0, 0, 0, 0, 1], "below"))
 
     return relations
 
@@ -544,11 +544,20 @@ class BBQ_Predictor:
             )
             
             # For each relation found (left, above, etc.), create a standard edge dict
-            for rel in relations:
+            for rel_vector, rel in relations:
                 edges.append({
-                    "source": source_node['id'],
-                    "target": target_node['id'],
-                    "relation": rel
+                    "source": {
+                        "source_id": source_node['node_id'],
+                        "source_center": source_node['bbox_center'],
+                        "source_extent": source_node['bbox_extent']
+                    },
+                    "target": {
+                        "target_id": target_node['node_id'],
+                        "target_center": target_node['bbox_center'],
+                        "target_extent": target_node['bbox_extent']
+                    },
+                    "relation": rel,
+                    "relation_vector": rel_vector
                 })
                 
         print(f"BBQ Heuristic predicted {len(edges)} edges.")
