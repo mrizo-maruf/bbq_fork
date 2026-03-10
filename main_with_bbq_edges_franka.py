@@ -7,6 +7,7 @@ import json
 import yaml
 import random
 from datetime import datetime
+from time import perf_counter
 
 import torch
 import numpy as np
@@ -139,6 +140,12 @@ def get_subfolders(path):
     p = Path(path)
     return [f.name for f in p.iterdir() if f.is_dir()]
 
+
+def log_section_time(section_name, start_time):
+    elapsed_ms = (perf_counter() - start_time) * 1000
+    logger.info(f"{section_name} completed in {elapsed_ms:.2f} ms")
+    return elapsed_ms
+
 def main(config_path, dataset_sequences):
     """Main function to build 3D scene graph with edges."""
     timestamp = datetime.now()
@@ -154,8 +161,10 @@ def main(config_path, dataset_sequences):
         # Initialize components
         nodes_constructor = NodesConstructor(config["nodes_constructor"])
         rgbd_dataset = get_dataset(config["dataset"])
+        section_timings_ms = {}
 
         # Section 3.1: Process RGBD sequence to accumulate 3D objects
+        section_start = perf_counter()
         logger.info("Iterating over RGBD sequence to accumulate 3D objects.")
         for step_idx in tqdm(range(len(rgbd_dataset))):
             frame = rgbd_dataset[step_idx]
@@ -164,29 +173,45 @@ def main(config_path, dataset_sequences):
         
         nodes_constructor.postprocessing()
         torch.cuda.empty_cache()
+        section_timings_ms["3.1"] = log_section_time("Section 3.1", section_start)
 
         # Section 3.2: Find 2D view to caption 3D objects
+        section_start = perf_counter()
         logger.info('Finding 2D view to caption 3D objects.')
         nodes_constructor.project(
             poses=rgbd_dataset.poses,
             intrinsics=rgbd_dataset.get_cam_K()
         )
         torch.cuda.empty_cache()
+        section_timings_ms["3.2"] = log_section_time("Section 3.2", section_start)
 
         # Section 3.3: Caption 3D objects
+        section_start = perf_counter()
         logger.info('Captioning 3D objects.')
         nodes = nodes_constructor.describe(colors=rgbd_dataset.color_paths)
         torch.cuda.empty_cache()
+        section_timings_ms["3.3"] = log_section_time("Section 3.3", section_start)
 
         # Section 3.4: Predict edges using BBQ
+        section_start = perf_counter()
         logger.info('Predicting BBQ based edges')
         bbq_edge_predictor = BBQ_Predictor()
         bbq_graph = bbq_edge_predictor.predict(nodes_constructor.objects)
+        section_timings_ms["3.4"] = log_section_time("Section 3.4", section_start)
 
         # Section 3.5: Save BBQ edges
+        section_start = perf_counter()
         save_edges_json(config, bbq_graph)
+        section_timings_ms["3.5"] = log_section_time("Section 3.5", section_start)
 
         torch.cuda.empty_cache()
+        logger.info(
+            "Section timings (ms): "
+            + ", ".join(
+                f"{section}={duration:.2f}"
+                for section, duration in section_timings_ms.items()
+            )
+        )
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
