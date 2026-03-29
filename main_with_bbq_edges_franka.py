@@ -219,7 +219,7 @@ if __name__ == "__main__":
                    "For more information see Sec. 3.1 - 3.6.")
     parser.add_argument(
         "--config_path", 
-        default="examples/configs/isaac/m3po_bbq_edges.yaml",
+        default="examples/configs/isaac/kg_nav_IsaacSimData.yaml",
         help="Path to configuration file")
     parser.add_argument(
         "--logger_level", 
@@ -238,8 +238,8 @@ if __name__ == "__main__":
 
     # Run main pipeline
     set_seed()
-    config_path = "/home/docker_user/BeyondBareQueries/examples/configs/isaac/m3po_bbq_edges.yaml"
-    folders = get_subfolders("/home/docker_user/BeyondBareQueries/IsaacSimData/M3PO2")
+    config_path = "/home/docker_user/BeyondBareQueries/examples/configs/isaac/kg_nav_IsaacSimData.yaml"
+    folders = get_subfolders("/home/docker_user/BeyondBareQueries/IsaacSimData/kg_nav_IsaacSimData")
 
     print(f"SCENES TO WORK WITH {folders}")
     main(config_path, folders)
