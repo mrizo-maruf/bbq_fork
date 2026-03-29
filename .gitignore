@@ -54,3 +54,6 @@ Thumbs.db
 
 # Jupyter Notebook
 .ipynb_checkpoints
+output/
+IsaacSimData/*
+IsaacSimData/
