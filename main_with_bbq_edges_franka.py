@@ -134,6 +134,79 @@ def save_edges_json(config, edges, filename="sceneverse_edges.json"):
     with open(filepath, 'w') as f:
         json.dump(convert_sets(edges), f)
 
+
+RELATION_NAME_MAP = {
+    "left": "to the left of",
+    "right": "to the right of",
+    "front": "in front of",
+    "back": "behind",
+    "above": "above",
+    "below": "below",
+}
+
+
+def save_scene_graph_json(config, objects, edges):
+    """Save structured scene graph JSON with nodes containing class names, bboxes and edges."""
+    output_path = config["nodes_constructor"]["output_path"]
+    os.makedirs(output_path, exist_ok=True)
+
+    def to_list(x):
+        if isinstance(x, np.ndarray):
+            return x.tolist()
+        if hasattr(x, 'tolist'):
+            return x.tolist()
+        return x
+
+    # Group edges by source node_id
+    edges_by_source = {}
+    for edge in edges:
+        src_id = edge["source"]["source_id"]
+        tgt_id = edge["target"]["target_id"]
+        raw_rel = edge["relation"]
+        relation_type = RELATION_NAME_MAP.get(raw_rel, raw_rel)
+        edges_by_source.setdefault(src_id, []).append({
+            "target_id": tgt_id,
+            "relation_type": relation_type,
+        })
+
+    nodes_dict = {}
+    for obj in objects:
+        nid = obj["node_id"]
+        bbox = obj["bbox"]
+        aabb_min = to_list(np.asarray(bbox.get_min_bound()))
+        aabb_max = to_list(np.asarray(bbox.get_max_bound()))
+        obb_center = to_list(np.asarray(bbox.center))
+        obb_extent = to_list(np.asarray(bbox.extent))
+
+        nodes_dict[str(nid)] = {
+            "track_id": nid,
+            "class_name": obj.get("class_name", f"object_{nid}"),
+            "description": obj.get("description", "none"),
+            "bbox_3d": {
+                "aabb": {
+                    "min": aabb_min,
+                    "max": aabb_max,
+                },
+                "obb": {
+                    "center": obb_center,
+                    "extent": obb_extent,
+                },
+            },
+            "edges": edges_by_source.get(nid, []),
+        }
+
+    scene_graph = {
+        "dataset": "isaacsim",
+        "num_objects": len(objects),
+        "nodes": nodes_dict,
+    }
+
+    filename = f'{config["dataset"]["sequence"]}.json'
+    filepath = os.path.join(output_path, filename)
+    with open(filepath, 'w') as f:
+        json.dump(scene_graph, f, indent=2)
+    logger.info(f"Scene graph saved to {filepath}")
+
 from pathlib import Path
 
 def get_subfolders(path):
@@ -199,9 +272,9 @@ def main(config_path, dataset_sequences):
         bbq_graph = bbq_edge_predictor.predict(nodes_constructor.objects)
         section_timings_ms["3.4"] = log_section_time("Section 3.4", section_start)
 
-        # Section 3.5: Save BBQ edges
+        # Section 3.5: Save structured scene graph
         section_start = perf_counter()
-        save_edges_json(config, bbq_graph)
+        save_scene_graph_json(config, nodes_constructor.objects, bbq_graph)
         section_timings_ms["3.5"] = log_section_time("Section 3.5", section_start)
 
         torch.cuda.empty_cache()

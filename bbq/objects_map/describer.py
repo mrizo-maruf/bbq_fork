@@ -128,9 +128,20 @@ def describe_objects(objects, colors, save_path="output/crops", isLLava=True):
             query = query_base + "\n" + query_tail
             text = chat(query=query, image_features=image_tensor, image_sizes=image_sizes)
             template["description"] = text.replace("<s>", "").replace("</s>", "").strip()
+
+            # Extract object class name using LLaVa
+            class_query = """
+            What is this object? Reply with ONLY the object class name, nothing else.
+            Examples: chair, table, lamp, door, wall, cabinet, sofa, monitor, shelf, bed, window, pillow, plant.
+            """
+            class_features = chat.preprocess_image([image_crop])
+            class_tensor = [img.to("cuda", dtype=torch.float16) for img in class_features]
+            class_text = chat(query=class_query, image_features=class_tensor, image_sizes=[image_crop.size])
+            template["class_name"] = class_text.replace("<s>", "").replace("</s>", "").strip().lower()
         else:
             # Use dummy description
             template["description"] = f"object_{idx}"
+            template["class_name"] = f"object_{idx}"
 
         # This part for saving individual images remains the same
         if save_path:
