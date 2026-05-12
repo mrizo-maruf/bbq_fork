@@ -1,18 +1,22 @@
 """3D tracking benchmark for the BBQ scene-graph pipeline on IsaacSim sequences.
 
-Reuses ``main_with_edges.py``'s integration loop and computes MOTA, MOTP,
-ID Consistency, ID Switches, T-SR and T-mIoU via ``metrics.tracking_metrics``.
+Single-scene mode (uses the scene in the YAML config):
+    python benchmark_tracking.py \
+        --config_path examples/configs/isaac/franka_cab_dex_more.yaml
 
-Usage:
+Multi-scene mode (one BBQ run per subfolder under --dataset_root):
     python benchmark_tracking.py \
         --config_path examples/configs/isaac/franka_cab_dex_more.yaml \
-        --iou_threshold 0.25 \
-        --matcher hungarian \
-        --output_dir benchmark_results
+        --dataset_root /path/to/IsaacSimData
+
+Each scene folder is expected to contain ``rgb/``, ``depth/``, ``bbox/``,
+``seg/`` and ``traj.txt`` (the IsaacSim layout). Per-scene metrics are
+written + printed, and a macro average across scenes is computed at the end.
 """
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import os
 import random
@@ -31,6 +35,7 @@ from tqdm import tqdm
 
 from bbq.datasets import get_dataset
 from bbq.objects_map import NodesConstructor
+from bbq.objects_map.utils import MapObjectList
 from metrics.tracking_metrics import (
     FrameRecord,
     GTInstance,
@@ -191,7 +196,7 @@ def load_gt_for_frame(
 # ---------------------------------------------------------------- helpers
 
 def bbox_to_xyzxyz(bbox) -> Tuple[float, float, float, float, float, float]:
-    """Convert an open3d AxisAlignedBoundingBox or OrientedBoundingBox to AABB tuple."""
+    """Convert open3d AxisAlignedBoundingBox / OrientedBoundingBox to an AABB tuple."""
     pts = np.asarray(bbox.get_box_points())
     mn = pts.min(axis=0)
     mx = pts.max(axis=0)
@@ -204,12 +209,25 @@ def frame_num_from_path(path: str) -> Optional[int]:
     return int(m.group(1)) if m else None
 
 
+def discover_scenes(root: Path) -> List[Path]:
+    """Subfolders of *root* that look like IsaacSim scenes (have rgb/ and bbox/)."""
+    if not root.exists() or not root.is_dir():
+        raise RuntimeError(f"Dataset root not found or not a directory: {root}")
+    scenes = sorted(
+        d for d in root.iterdir()
+        if d.is_dir() and (d / "rgb").is_dir() and (d / "bbox").is_dir()
+    )
+    if not scenes:
+        raise RuntimeError(
+            f"No scenes under {root}. Expected subfolders with rgb/ and bbox/.")
+    return scenes
+
+
 class StableTrackIDs:
     """Maps each scene-object dict to a stable monotonic track ID.
 
-    Uses ``id()`` of the dict, and keeps a strong reference to every dict
-    we've ever seen so that GC cannot recycle an address after a merge
-    drops a track.
+    Uses ``id()`` of the dict and holds a strong reference to every dict it
+    has seen so GC cannot recycle an address after a merge drops a track.
     """
 
     def __init__(self) -> None:
@@ -228,57 +246,59 @@ class StableTrackIDs:
         return tid
 
 
-# ---------------------------------------------------------------- main
+# ---------------------------------------------------------------- benchmark core
 
-def main(args: argparse.Namespace) -> None:
-    with open(args.config_path) as f:
-        config = yaml.full_load(f)
+def benchmark_scene(
+    nodes_constructor: NodesConstructor,
+    scene_dir: Path,
+    dataset_cfg_template: dict,
+    args: argparse.Namespace,
+) -> dict:
+    """Run BBQ on one scene and return its metrics dict.
 
-    if config["dataset"].get("relative_pose", False):
-        raise RuntimeError(
-            "config has relative_pose=True; predictions would be in a "
-            "different frame from GT. Set relative_pose: False to benchmark."
-        )
+    *nodes_constructor* is reused across scenes (its heavy GPU models stay
+    loaded); only its ``objects`` list is reset before each scene.
+    """
+    cfg = copy.deepcopy(dataset_cfg_template)
+    cfg["base_dir"] = str(scene_dir.parent)
+    cfg["sequence"] = scene_dir.name
+    rgbd_dataset = get_dataset(cfg)
 
-    nodes_constructor = NodesConstructor(config["nodes_constructor"])
-    rgbd_dataset = get_dataset(config["dataset"])
-
-    scene_dir = Path(config["dataset"]["base_dir"]) / config["dataset"]["sequence"]
-    if not (scene_dir / "bbox").exists():
-        raise RuntimeError(f"GT directory not found: {scene_dir / 'bbox'}")
-
-    matcher = match_mode_factory(args.matcher)
-    accumulator = MetricsAccumulator()
+    # Reset only per-scene tracker state; keep models loaded.
+    nodes_constructor.objects = MapObjectList()
     tracker_ids = StableTrackIDs()
+    accumulator = MetricsAccumulator()
+    matcher = match_mode_factory(args.matcher)
 
     n_frames = len(rgbd_dataset)
     if args.limit is not None:
         n_frames = min(n_frames, args.limit)
 
     n_with_gt = 0
-    logger.info(f"Benchmarking {n_frames} frames from {scene_dir}.")
-    logger.info(f"Matcher={args.matcher}, IoU threshold={args.iou_threshold}, mode=bbox3d.")
+    logger.info(
+        f"[{scene_dir.name}] {n_frames} frames | matcher={args.matcher} | "
+        f"IoU>={args.iou_threshold} | match_mode=bbox3d"
+    )
 
-    for step_idx in tqdm(range(n_frames)):
+    for step_idx in tqdm(range(n_frames), desc=scene_dir.name, leave=False):
         frame = rgbd_dataset[step_idx]
         nodes_constructor.integrate(step_idx, frame, save_path=None)
         torch.cuda.empty_cache()
 
         frame_num = frame_num_from_path(rgbd_dataset.color_paths[step_idx])
         if frame_num is None:
-            logger.warning(f"step {step_idx}: could not parse frame number; skipping GT.")
+            logger.warning(f"[{scene_dir.name}] step {step_idx}: cannot parse frame number; skipping GT.")
             continue
 
         gt_instances = load_gt_for_frame(
             scene_dir, frame_num,
             skip_labels=_DEFAULT_SKIP_LABELS,
-            load_masks=False,  # 3D-only eval
+            load_masks=False,
         )
         if not gt_instances:
             continue
         n_with_gt += 1
 
-        # Predictions: scene objects with a detection this frame.
         pred_instances: List[PredInstance] = []
         for obj in nodes_constructor.objects:
             ids: set = obj.get("id", set())
@@ -290,11 +310,11 @@ def main(args: argparse.Namespace) -> None:
             try:
                 bb = bbox_to_xyzxyz(bbox)
             except Exception as e:
-                logger.debug(f"frame {step_idx}: bbox parse failed: {e}")
+                logger.debug(f"[{scene_dir.name}] frame {step_idx}: bbox parse failed: {e}")
                 continue
             pred_instances.append(PredInstance(
                 pred_id=tracker_ids.get(obj),
-                class_name=None,  # captioning happens after the loop in BBQ
+                class_name=None,
                 bbox_xyzxyz=bb,
             ))
 
@@ -313,24 +333,96 @@ def main(args: argparse.Namespace) -> None:
 
     if n_with_gt == 0:
         raise RuntimeError(
-            f"No frames produced GT. Check that {scene_dir} contains "
-            f"bbox/bboxes######_info.json files."
+            f"[{scene_dir.name}] no GT loaded. Expected "
+            f"{scene_dir}/bbox/bboxes######_info.json files."
         )
 
     results = accumulator.compute()
-    results["benchmark_config"] = {
-        "scene": config["dataset"]["sequence"],
-        "iou_threshold": args.iou_threshold,
-        "matcher": args.matcher,
-        "match_mode": "bbox3d",
-        "frames_with_gt": n_with_gt,
-        "total_frames_processed": n_frames,
+    results["scene"] = scene_dir.name
+    results["frames_with_gt"] = n_with_gt
+    return results
+
+
+# ---------------------------------------------------------------- aggregation
+
+# Metrics that get macro-averaged (mean across scenes).
+_AGG_MEAN_KEYS = [
+    "T_mIoU", "T_mIoU_std", "T_SR", "ID_consistency",
+    "MOTA", "MOTA_FN_ratio", "MOTA_FP_ratio", "MOTA_IDSW_ratio", "MOTP",
+]
+# Counts that get summed across scenes.
+_AGG_SUM_KEYS = [
+    "frames_processed", "unique_gt_objects",
+    "total_gt_instances", "total_pred_instances", "total_matches",
+    "total_false_positives", "total_false_negatives", "ID_switches_total",
+]
+
+
+def aggregate_macro(per_scene: Dict[str, dict]) -> dict:
+    """Mean of headline metrics across scenes (equal weight per scene)."""
+    out: Dict = {}
+    for k in _AGG_MEAN_KEYS:
+        vals = [r[k] for r in per_scene.values() if k in r]
+        out[k] = float(np.mean(vals)) if vals else 0.0
+    for k in _AGG_SUM_KEYS:
+        out[k] = int(sum(int(r.get(k, 0)) for r in per_scene.values()))
+    out["scenes_evaluated"] = len(per_scene)
+    out["per_scene_summary"] = {
+        name: {k: r.get(k) for k in _AGG_MEAN_KEYS}
+        for name, r in per_scene.items()
     }
+    return out
 
-    print_summary(results, title=f"3D TRACKING - {config['dataset']['sequence']}")
 
-    out_dir = Path(args.output_dir) / datetime.now().strftime("%Y%m%d_%H%M%S")
-    save_metrics(results, out_dir, scene_name=config["dataset"]["sequence"])
+# ---------------------------------------------------------------- main
+
+def main(args: argparse.Namespace) -> None:
+    with open(args.config_path) as f:
+        config = yaml.full_load(f)
+
+    if config["dataset"].get("relative_pose", False):
+        raise RuntimeError(
+            "config has relative_pose=True; predictions would be in a "
+            "different frame from GT. Set relative_pose: False."
+        )
+
+    if args.dataset_root:
+        scenes = discover_scenes(Path(args.dataset_root))
+        logger.info(f"Discovered {len(scenes)} scenes under {args.dataset_root}.")
+    else:
+        scenes = [Path(config["dataset"]["base_dir"]) / config["dataset"]["sequence"]]
+
+    nodes_constructor = NodesConstructor(config["nodes_constructor"])
+
+    run_dir = Path(args.output_dir) / datetime.now().strftime("%Y%m%d_%H%M%S")
+    run_dir.mkdir(parents=True, exist_ok=True)
+
+    per_scene: Dict[str, dict] = {}
+    failures: Dict[str, str] = {}
+
+    for scene_dir in scenes:
+        try:
+            results = benchmark_scene(nodes_constructor, scene_dir, config["dataset"], args)
+        except Exception as e:
+            logger.exception(f"[{scene_dir.name}] failed: {e}")
+            failures[scene_dir.name] = str(e)
+            continue
+
+        print_summary(results, title=f"3D TRACKING - {scene_dir.name}")
+        save_metrics(results, run_dir, scene_name=scene_dir.name)
+        per_scene[scene_dir.name] = results
+
+    if len(per_scene) > 1:
+        agg = aggregate_macro(per_scene)
+        print_summary(agg, title=f"MACRO AVG ACROSS {agg['scenes_evaluated']} SCENES")
+        save_metrics(agg, run_dir, scene_name="_macro_avg_all_scenes")
+
+    if failures:
+        logger.warning(f"{len(failures)} scene(s) failed: {sorted(failures)}")
+        with open(run_dir / "_failures.json", "w") as f:
+            json.dump(failures, f, indent=2)
+
+    logger.info(f"All outputs saved under {run_dir}.")
 
 
 if __name__ == "__main__":
@@ -341,6 +433,11 @@ if __name__ == "__main__":
         default="examples/configs/isaac/franka_cab_dex_more.yaml",
         help="BBQ pipeline config (same one used by main_with_edges.py).")
     parser.add_argument(
+        "--dataset_root", default=None,
+        help="Root folder containing one subfolder per IsaacSim scene. "
+             "When set, scenes are auto-discovered and the config's "
+             "dataset.base_dir / dataset.sequence are overridden per scene.")
+    parser.add_argument(
         "--output_dir", default="benchmark_results",
         help="Where per-run metric JSONs are written.")
     parser.add_argument(
@@ -350,7 +447,7 @@ if __name__ == "__main__":
         "--matcher", choices=["greedy", "hungarian"], default="hungarian")
     parser.add_argument(
         "--limit", type=int, default=None,
-        help="Process at most this many frames (for quick smoke tests).")
+        help="Per scene: process at most this many frames (smoke test).")
     parser.add_argument("--logger_level", default="INFO")
     args = parser.parse_args()
 
